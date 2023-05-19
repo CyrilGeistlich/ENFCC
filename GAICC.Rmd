@@ -1,0 +1,58 @@
+---
+title: "GAICC"
+author: "Cyril Geistlich"
+date: "2023-05-19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries}
+library("zoo")
+library("ggplot2")
+library("dplyr")
+library("readr")
+
+```
+
+
+```{r read data}
+
+political_engagement <- read_delim("data/Political_Engagement.csv",",")
+waste <- read_delim("data/waste_data.csv",",")
+
+# Political Engagement
+# Remove top 3 empty entries, rename
+political_engagement <- political_engagement[-c(1:3),] |>
+  rename(score = `Score*`,
+         rank = Rank,
+         country = Country)
+
+
+
+
+# Population
+population <- waste[,c(3,20)]
+
+population <- population |>
+  rename(population = population_population_number_of_people)
+  
+
+# GDP Per Person
+gdp <- waste[,c(3,5)]
+
+
+# Waste
+# Remove unnecessary columns
+waste <- waste[,-c(1:2,4,6:19,21:26,28:51)]
+waste <- waste |>
+  rename(country = country_name,
+         population = population_population_number_of_people,
+         msw = total_msw_total_msw_generated_tons_year) # MSW = Municipal SOlid Waste
+
+
+
+```
+
