@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r libraries}
 library("zoo")
 library("ggplot2")
+library("ggrepel")
 library("dplyr")
 library("readr")
 
@@ -22,37 +23,206 @@ library("readr")
 
 political_engagement <- read_delim("data/Political_Engagement.csv",",")
 waste <- read_delim("data/waste_data.csv",",")
+public_investment <- read_delim("data/Public_Investment_2020.csv",",")
+protected_areas <- read_delim("data/protected_areas.csv",",")
+emissions <- read_delim("data/co_eq_emissions.csv",";")
 
+#CO2-Emissions
+colnames(emissions) <- c("country", "ISO", "emissions_per_capita")
+emissions <- emissions[-1,-1]
 # Political Engagement
 # Remove top 3 empty entries, rename
-political_engagement <- political_engagement[-c(1:3),] |>
+political_engagement <- political_engagement[-c(1:3),-c(1,4:6)] |>
   rename(score = `Score*`,
-         rank = Rank,
          country = Country)
-
-
+political_engagement$score <- as.numeric(political_engagement$score)
 
 
 # Population
 population <- waste[,c(3,20)]
 
 population <- population |>
-  rename(population = population_population_number_of_people)
+  rename(population = population_population_number_of_people,
+         country = country_name)
   
 
 # GDP Per Person
 gdp <- waste[,c(3,5)]
+gdp <- gdp |>
+  rename(country = country_name)
 
 
 # Waste
-# Remove unnecessary columns
+# Remove unnecessary columns, rename columns
 waste <- waste[,-c(1:2,4,6:19,21:26,28:51)]
 waste <- waste |>
   rename(country = country_name,
          population = population_population_number_of_people,
-         msw = total_msw_total_msw_generated_tons_year) # MSW = Municipal SOlid Waste
+         msw = total_msw_total_msw_generated_tons_year) # MSW = Municipal Solid Waste
+
+#Prep Public Investment Data
+public_investment <- public_investment[,-c(2:6,8:14)]
+
+public_investment <- public_investment |>
+  rename(investment_usd = `Amount (2020 USD million)`,
+         ISO = `ISO-code`) |>
+  group_by(ISO) |>
+  summarize(total_investment_million_usd = sum(investment_usd))
+
+#Prep protected areas Data
+protected_areas <- protected_areas[,-c(1:2,5:10)]
+protected_areas <- protected_areas |>
+  rename(ISO = `Country Code`,
+         country = `Country Name`,
+         `protected_areas_2022_%` = `2022 [YR2022]`) 
+protected_areas$`protected_areas_2022_%` <- as.numeric(protected_areas$`protected_areas_2022_%`)
+
+waste <- waste[,-c(2,3)]
+
+```
+
+```{r create final df}
+#Join data
+rm(WAICC)
+WAICC <- left_join(population,gdp, by = "country")
+WAICC <- left_join(WAICC,political_engagement, by = "country") |>
+  rename(political_engagement_score = score)
+WAICC <- left_join(WAICC, protected_areas, by = "country")
+WAICC <- left_join(WAICC, public_investment, by = "ISO")
+WAICC <- left_join(WAICC, waste, by = "country") |> 
+  rename(municipal_solid_waste = msw)
+WAICC <- left_join(WAICC, emissions, by = "ISO")
+
+#Only Rows where all values are available
+WAICC <- WAICC[complete.cases(WAICC),]
+```
+
+```{r scale function}
+scale_values <- function(x) {
+ 2*(x/max(x))-1
+}
+```
+
+```{r calc index}
 
 
 
+#Norm data by population
+WAICC <- WAICC |>
+  mutate(municipal_solid_waste_per_capita = municipal_solid_waste/population * 10**4) |>
+  mutate(investment_per_capita = total_investment_million_usd*10**6/population)
+
+columns_to_scale <- c("municipal_solid_waste_per_capita", "emissions_per_capita","political_engagement_score","investment_per_capita","protected_areas_2022_%")
+
+#rescale columns between -1 and 1
+for (col in columns_to_scale) {
+  new_col_name <- paste0(col, "_scaled")
+  WAICC[, new_col_name] <- scale_values(WAICC[, col])
+}
+
+
+```
+
+```{r calc Index dimensions}
+#The Index consists of 2 dimensions, dim one for the impact on climate change and dim two for the accountability
+
+# The weights for dim 1 are Emissions: 4, Waste: 1
+# The weights for dim 2 are political engagement: 1, investement_per_capita: 2.
+
+WAICC <- WAICC |>
+  mutate(dim_1 = (emissions_per_capita_scaled * 4 + municipal_solid_waste_per_capita_scaled)/5) |>
+  mutate(dim_2 = (political_engagement_score_scaled + 2 * investment_per_capita_scaled)/3)
+```
+
+```{r visualize}
+
+# Determine the quadrant for each data point
+WAICC$quadrant <- with(WAICC, ifelse(dim_1 < 0 & dim_2 < 0, "Bottom Left",
+                              ifelse(dim_1 < 0 & dim_2 >= 0, "Top Left",
+                              ifelse(dim_1 >= 0 & dim_2 < 0, "Bottom Right",
+                              "Top Right"))))
+plot_1 <- WAICC |> ggplot() +
+  geom_point(aes(dim_1,dim_2,color = dim_1 + dim_2)) +
+  scale_color_gradient(low = "red", high = "green") +
+  xlab("Climate Change Impact per Capita") +
+  ylab("Contribution to change per capita") +
+  xlim(-1,1) + ylim(-1,1) +
+  geom_text_repel(aes(dim_1, dim_2, label = country), size = 2, force = 5) +
+  ggtitle("Climate Impact plotted against Accountability") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black")
+plot_1
+
+```
+
+```{r plot 2}
+  plot_2 <- WAICC |> ggplot() +
+  geom_point(aes(dim_1,dim_2,color = dim_1 + dim_2)) +
+  scale_color_gradient(low = "red", high = "green") +
+  xlab("Climate Change Impact per Capita") +
+  ylab("Contribution to change per capita") +
+  xlim(-1,1) + ylim(-1,1) +
+  geom_text_repel(aes(dim_1, dim_2, label = country), size = 2, force = 5) +
+  ggtitle("Climate Impact plotted against Accountability") +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+    geom_rect(aes(xmin = 0, xmax = 1, ymin = 0, ymax = 1),
+            fill = "lightgreen", alpha = 0.2) +
+  geom_text(x = 0.5, y = 0.5, label = "Good Area", color = "black", size = 5, fontface = "bold")
+plot_2
+```
+
+```{r plot 3}
+plot_3 <- WAICC |> ggplot() +
+  xlab("Climate Change Impact per Capita") +
+  ylab("Contribution to change per capita") +
+  xlim(-1,1) + ylim(-1,1) +
+  ggtitle("Climate Impact plotted against Accountability") +
+  geom_rect(aes(xmin = 0, xmax = 1, ymin = 0, ymax = 1),
+            fill = "lightgreen", alpha = 0.2) +
+  geom_text(x = 0.5, y = 0.5, label = "Good Area", color = "black", size = 5, fontface = "bold") +
+  geom_rect(aes(xmin = -1, xmax = 0, ymin = -1, ymax = 0),
+            fill = "red", alpha = 0.2) +
+  geom_text(x = -0.5, y = -0.5, label = "Bad Area", color = "black", size = 5, fontface = "bold") +  geom_rect(aes(xmin = 0, xmax = 1, ymin = -1, ymax = 0),
+            fill = "orange", alpha = 0.2) +
+  geom_text(x = 0.5, y = -0.5, label = "OK Area", color = "black", size = 5, fontface = "bold")   +
+  geom_rect(aes(xmin = -1, xmax = 0, ymin = 0, ymax = 1),
+            fill = "orange", alpha = 0.2) +
+  geom_text(x = -0.5, y = 0.5, label = "OK Area", color = "black", size = 5, fontface = "bold") +
+    geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black")
+plot_3
+```
+
+
+```{r plot 4}
+
+
+custom_palette <- c("red", "orange","orange", "green")
+names(custom_palette) <- c("Bottom Left", "Top Left", "Bottom Right", "Top Right")
+
+# Create the plot with custom colors
+plot_4 <- ggplot(WAICC) +
+  geom_point(aes(dim_1, dim_2, color = quadrant)) +
+  scale_color_manual(values = custom_palette) +
+  xlab("Climate Change Impact per Capita") +
+  ylab("Contribution to Change per Capita") +
+  xlim(-1, 1) +
+  ylim(-1, 1) +
+  geom_text_repel(aes(dim_1, dim_2, label = ISO), size = 2, force = 5) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
+  ggtitle("Climate Impact plotted against Accountability") +
+  geom_rect(aes(xmin = 0, xmax = 1, ymin = 0, ymax = 1),
+            fill = "lightgreen", alpha = 0.2) +
+  geom_text(x = 0.5, y = 0.5, label = "The Good Area", color = "black", size = 5, fontface = "bold")
+plot_4
+```
+
+```{r}
+ggsave("plots/plot_1.png", plot_1, width = 10, height = 8, dpi = 300)
+ggsave("plots/plot_2.png", plot_2, width = 10, height = 8, dpi = 300)
+ggsave("plots/plot_3.png", plot_3, width = 10, height = 8, dpi = 300)
+ggsave("plots/plot_4.png", plot_4, width = 10, height = 8, dpi = 300)
 ```
 
