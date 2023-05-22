@@ -74,8 +74,8 @@ protected_areas <- protected_areas[,-c(1:2,5:10)]
 protected_areas <- protected_areas |>
   rename(ISO = `Country Code`,
          country = `Country Name`,
-         `protected_areas_2022_%` = `2022 [YR2022]`) 
-protected_areas$`protected_areas_2022_%` <- as.numeric(protected_areas$`protected_areas_2022_%`)
+         `protected_areas_2022_percent` = `2022 [YR2022]`) 
+protected_areas$`protected_areas_2022_percent` <- as.numeric(protected_areas$`protected_areas_2022_percent`)
 
 waste <- waste[,-c(2,3)]
 
@@ -98,29 +98,39 @@ WAICC <- WAICC[complete.cases(WAICC),]
 ```
 
 ```{r scale function}
-scale_values <- function(x) {
+scale_values_positive <- function(x) {
  2*(x/max(x))-1
 }
+
+scale_values_negative <- function(x) {
+ ((x - min(x)) / (max(x) - min(x))) * 2 -1
+}
+
 ```
 
 ```{r calc index}
-
-
+#Sum of emissions % percent
+WAICC$emissions_per_capita_percent <- WAICC$emissions_per_capita/sum(WAICC$emissions_per_capita) * 100
 
 #Norm data by population
 WAICC <- WAICC |>
   mutate(municipal_solid_waste_per_capita = municipal_solid_waste/population * 10**4) |>
   mutate(investment_per_capita = total_investment_million_usd*10**6/population)
 
-columns_to_scale <- c("municipal_solid_waste_per_capita", "emissions_per_capita","political_engagement_score","investment_per_capita","protected_areas_2022_%")
+columns_to_scale_p <- c("political_engagement_score","investment_per_capita","protected_areas_2022_percent")
 
-#rescale columns between -1 and 1
-for (col in columns_to_scale) {
+columns_to_scale_n <- c("municipal_solid_waste_per_capita", "emissions_per_capita")
+
+#positive rescale columns between -1 and 1
+for (col in columns_to_scale_p) {
   new_col_name <- paste0(col, "_scaled")
-  WAICC[, new_col_name] <- scale_values(WAICC[, col])
+  WAICC[, new_col_name] <- scale_values_positive(WAICC[, col])
 }
 
-
+for (col in columns_to_scale_n) {
+  new_col_name <- paste0(col, "_scaled")
+  WAICC[, new_col_name] <- scale_values_negative(WAICC[, col])
+}
 ```
 
 ```{r calc Index dimensions}
@@ -131,7 +141,8 @@ for (col in columns_to_scale) {
 
 WAICC <- WAICC |>
   mutate(dim_1 = (emissions_per_capita_scaled * 4 + municipal_solid_waste_per_capita_scaled)/5) |>
-  mutate(dim_2 = (political_engagement_score_scaled + 2 * investment_per_capita_scaled)/3)
+  mutate(dim_2 = (political_engagement_score_scaled + 2 * investment_per_capita_scaled +  protected_areas_2022_percent_scaled)/4)
+
 ```
 
 ```{r visualize}

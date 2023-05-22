@@ -1,0 +1,268 @@
+﻿Data Source;World Development Indicators;
+Country Name;Country Code;2019
+Aruba;ABW;
+Africa Eastern and Southern;AFE;1427211.167
+Afghanistan;AFG;28636.5
+Africa Western and Central;AFW;833825.127
+Angola;AGO;79678.73
+Albania;ALB;9008.165
+Andorra;AND;627.58
+Arab World;ARB;2881819.784
+United Arab Emirates;ARE;243546.7
+Argentina;ARG;369051.9
+Armenia;ARM;9963.242
+American Samoa;ASM;
+Antigua and Barbuda;ATG;1217.041
+Australia;AUS;585981.2
+Austria;AUT;76917.89
+Azerbaijan;AZE;54803.1
+Burundi;BDI;4559.564
+Belgium;BEL;108064.9
+Benin;BEN;15016.64
+Burkina Faso;BFA;32209.46
+Bangladesh;BGD;215942.7
+Bulgaria;BGR;51283.43
+Bahrain;BHR;54408.02
+Bahamas; The;3121.243
+Bosnia and Herzegovina;BIH;26230.78
+Belarus;BLR;86834.95
+Belize;BLZ;1545.762
+Bermuda;BMU;
+Bolivia;BOL;60785.47
+Brazil;BRA;1057259
+Barbados;BRB;3793.393
+Brunei Darussalam;BRN;9296.374
+Bhutan;BTN;1675.716
+Botswana;BWA;11003.76
+Central African Republic;CAF;19725.46
+Canada;CAN;736928.2
+Central Europe and the Baltics;CEB;803134.63
+Switzerland;CHE;46498.64
+Channel Islands;CHI;
+Chile;CHL;113018.9
+China;CHN;12705090
+Cote d'Ivoire;CIV;24857.53
+Cameroon;CMR;90124.86
+Congo; Dem. Rep.;53899.46
+Congo; Rep.;18021.27
+Colombia;COL;187338.9
+Comoros;COM;642.765
+Cabo Verde;CPV;808.743
+Costa Rica;CRI;15745.71
+Caribbean small states;CSS;62361.099
+Cuba;CUB;41237.37
+Curacao;CUW;
+Cayman Islands;CYM;
+Cyprus;CYP;8540.523
+Czechia;CZE;116590.9
+Germany;DEU;749708.7
+Djibouti;DJI;1379.019
+Dominica;DMA;234.591
+Denmark;DNK;43200.04
+Dominican Republic;DOM;41315.43
+Algeria;DZA;282008.2
+East Asia & Pacific (excluding high income);EAP;15499418.05
+Early-demographic dividend;EAR;11592651.82
+East Asia & Pacific;EAS;18110166.07
+Europe & Central Asia (excluding high income);ECA;4199856.294
+Europe & Central Asia;ECS;8065991.303
+Ecuador;ECU;72528.4
+Egypt; Arab Rep.;344822.8
+Euro area;EMU;2588948.153
+Eritrea;ERI;6332.812
+Spain;ESP;306947
+Estonia;EST;12873.96
+Ethiopia;ETH;150963.1
+European Union;EUU;3383431.693
+Fragile and conflict affected situations;FCS;2353723.16
+Finland;FIN;51478.64
+Fiji;FJI;2380.337
+France;FRA;414036
+Faroe Islands;FRO;
+Micronesia; Fed. Sts.;258.654
+Gabon;GAB;13169.28
+United Kingdom;GBR;440082.7
+Georgia;GEO;17598.6
+Ghana;GHA;37651.57
+Gibraltar;GIB;
+Guinea;GIN;28331
+Gambia; The;2130.867
+Guinea-Bissau;GNB;2579.344
+Equatorial Guinea;GNQ;11406.76
+Greece;GRC;78502.91
+Grenada;GRD;2387.209
+Greenland;GRL;
+Guatemala;GTM;35095.24
+Guam;GUM;
+Guyana;GUY;5680.19
+High income;HIC;14884807.39
+Hong Kong SAR; China;
+Honduras;HND;22388.7
+Heavily indebted poor countries (HIPC);HPC;1242089.045
+Croatia;HRV;22257.68
+Haiti;HTI;10495.47
+Hungary;HUN;60586.46
+IBRD only;IBD;29032574.81
+IDA & IBRD total;IBT;31959627.29
+IDA total;IDA;2927052.478
+IDA blend;IDB;1185646.429
+Indonesia;IDN;1002369
+IDA only;IDX;1741406.049
+Isle of Man;IMN;
+India;IND;3394872
+Not classified;INX;
+Ireland;IRL;61475.62
+Iran; Islamic Rep.;925524.8
+Iraq;IRQ;320817
+Iceland;ISL;2851.035
+Israel;ISR;87178.82
+Italy;ITA;389003.8
+Jamaica;JAM;9965.399
+Jordan;JOR;36568.12
+Japan;JPN;1166510
+Kazakhstan;KAZ;274666.4
+Kenya;KEN;81012.89
+Kyrgyz Republic;KGZ;16907.28
+Cambodia;KHM;40061.12
+Kiribati;KIR;117.936
+St. Kitts and Nevis;KNA;350.733
+Korea; Rep.;715499.2
+Kuwait;KWT;136691.9
+Latin America & Caribbean (excluding high income);LAC;2774512.468
+Lao PDR;LAO;29276.2
+Lebanon;LBN;35209.91
+Liberia;LBR;2222.422
+Libya;LBY;126685.1
+St. Lucia;LCA;881.65
+Latin America & Caribbean;LCN;3237139.469
+Least developed countries: UN classification;LDC;1593778.146
+Low income;LIC;1009897.743
+Liechtenstein;LIE;163.571
+Sri Lanka;LKA;35985.18
+Lower middle income;LMC;9203043.453
+Low & middle income;LMY;31147055.17
+Lesotho;LSO;2526.989
+Late-demographic dividend;LTE;19844092.69
+Lithuania;LTU;18934.41
+Luxembourg;LUX;10481.21
+Latvia;LVA;11704.76
+Macao SAR; China;
+St. Martin (French part);MAF;
+Morocco;MAR;93084.13
+Monaco;MCO;
+Moldova;MDA;13387.47
+Madagascar;MDG;29584.6
+Maldives;MDV;2600.529
+Middle East & North Africa;MEA;3718712.839
+Mexico;MEX;653873
+Marshall Islands;MHL;231.754
+Middle income;MIC;30134316.46
+North Macedonia;MKD;11249.51
+Mali;MLI;44154.68
+Malta;MLT;2139.13
+Myanmar;MMR;133250.9
+Middle East & North Africa (excluding high income);MNA;2256584.569
+Montenegro;MNE;3830.227
+Mongolia;MNG;56052.14
+Northern Mariana Islands;MNP;
+Mozambique;MOZ;35399.87
+Mauritania;MRT;14289.63
+Mauritius;MUS;6851.641
+Malawi;MWI;10950.78
+Malaysia;MYS;313023.6
+North America;NAC;6738137.2
+Namibia;NAM;10658.87
+New Caledonia;NCL;
+Niger;NER;42717.13
+Nigeria;NGA;308179.8
+Nicaragua;NIC;18798.7
+Netherlands;NLD;172231.2
+Norway;NOR;45902.35
+Nepal;NPL;44215.16
+Nauru;NRU;69.995
+New Zealand;NZL;83201
+OECD members;OED;14551223.39
+Oman;OMN;100259.4
+Other small states;OSS;285989.534
+Pakistan;PAK;432496.1
+Panama;PAN;20878.79
+Peru;PER;100729.5
+Philippines;PHL;234283.3
+Palau;PLW;287.004
+Papua New Guinea;PNG;22413.8
+Poland;POL;353140.2
+Pre-demographic dividend;PRE;1787711.792
+Puerto Rico;PRI;
+Korea; Dem. People's Rep.;73474.53
+Portugal;PRT;61380.97
+Paraguay;PRY;49553.18
+West Bank and Gaza;PSE;
+Pacific island small states;PSS;6183.727
+Post-demographic dividend;PST;13060977.39
+French Polynesia;PYF;
+Qatar;QAT;114756.4
+Romania;ROU;101236.3
+Russian Federation;RUS;2476835
+Rwanda;RWA;5343.408
+South Asia;SAS;4156423.885
+Saudi Arabia;SAU;723147.9
+Sudan;SDN;106061.7
+Senegal;SEN;29234.74
+Singapore;SGP;67231.75
+Solomon Islands;SLB;944.941
+Sierra Leone;SLE;6075.532
+El Salvador;SLV;12823.11
+San Marino;SMR;
+Somalia;SOM;25154.7
+Serbia;SRB;61929.85
+Sub-Saharan Africa (excluding high income);SSA;2260259.905
+South Sudan;SSD;50910.61
+Sub-Saharan Africa;SSF;2261036.294
+Small states;SST;354534.36
+Sao Tome and Principe;STP;182.262
+Suriname;SUR;4459.235
+Slovak Republic;SVK;38063.21
+Slovenia;SVN;16463.32
+Sweden;SWE;46188.53
+Eswatini;SWZ;2788.727
+Sint Maarten (Dutch part);SXM;
+Seychelles;SYC;776.389
+Syrian Arab Republic;SYR;48478.95
+Turks and Caicos Islands;TCA;
+Chad;TCD;81648.97
+East Asia & Pacific (IDA & IBRD countries);TEA;15420145.51
+Europe & Central Asia (IDA & IBRD countries);TEC;4676490.474
+Togo;TGO;7886.352
+Thailand;THA;422086.6
+Tajikistan;TJK;17506.19
+Turkmenistan;TKM;157330.4
+Latin America & the Caribbean (IDA & IBRD countries);TLA;3188946.552
+Timor-Leste;TLS;5905.827
+Middle East & North Africa (IDA & IBRD countries);TMN;2256584.569
+Tonga;TON;311.339
+South Asia (IDA & IBRD);TSA;4156423.885
+Sub-Saharan Africa (IDA & IBRD countries);TSS;2261036.294
+Trinidad and Tobago;TTO;28344.39
+Tunisia;TUN;41592.96
+Turkiye;TUR;488471.6
+Tuvalu;TUV;25.873
+Tanzania;TZA;83998.3
+Uganda;UGA;43294
+Ukraine;UKR;233264.2
+Upper middle income;UMC;20931273.01
+Uruguay;URY;36117.1
+United States;USA;6001209
+Uzbekistan;UZB;188755.9
+St. Vincent and the Grenadines;VCT;339.352
+Venezuela; RB;293718.5
+British Virgin Islands;VGB;
+Virgin Islands (U.S.);VIR;
+Vietnam;VNM;450149.3
+Vanuatu;VUT;869.049
+World;WLD;48116560
+Samoa;WSM;684.459
+Kosovo;XKX;
+Yemen; Rep.;23855.66
+South Africa;ZAF;555431.7
+Zambia;ZMB;37570.79
+Zimbabwe;ZWE;30527.39
