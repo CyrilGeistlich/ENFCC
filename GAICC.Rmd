@@ -99,7 +99,7 @@ WAICC <- WAICC[complete.cases(WAICC),]
 
 ```{r scale function}
 scale_values_positive <- function(x) {
- 2*(x/max(x))-1
+ (x/max(x))-1
 }
 
 ```
@@ -112,8 +112,13 @@ WAICC <- WAICC |>
   rename(emissions_per_capita = emissions_co2)
 
 #Scale emissions, so that 700kg co2 = 0
-WAICC$emissions_per_capita_700 <- ((WAICC$emissions_per_capita - 700)/700)
-WAICC$emissions_per_capita_700_scaled <- (-WAICC$emissions_per_capita/max(WAICC$emissions_per_capita))* 2 + 1
+WAICC <- WAICC |>
+  mutate(emissions_per_capita_scaled = log(emissions_per_capita)) |>
+  mutate(emissions_per_capita_scaled = emissions_per_capita_scaled/max(emissions_per_capita_scaled) * -1)
+
+#Scale waste
+WAICC <- WAICC |>
+  mutate(municipal_solid_waste_per_capita_scaled = municipal_solid_waste_per_capita/max(municipal_solid_waste_per_capita)*-1)
 
 columns_to_scale_p <- c("political_engagement_score","investment_per_capita","protected_areas_2022_percent")
 
@@ -123,21 +128,18 @@ for (col in columns_to_scale_p) {
   new_col_name <- paste0(col, "_scaled")
   WAICC[, new_col_name] <- scale_values_positive(WAICC[, col])
 }
-
-
-
  
 ```
 
 ```{r calc Index dimensions}
 #The Index consists of 2 dimensions, dim one for the impact on climate change and dim two for the accountability
 
-# The weights for dim 1 are Emissions: 4, Waste: 1
+# The weights for dim 1 are Emissions (sclaed log): 4, Waste: 1
 # The weights for dim 2 are political engagement: 1, investement_per_capita: 2.
 
 WAICC <- WAICC |>
-  mutate(dim_1 = emissions_per_capita_700_scaled) |>
-  mutate(dim_2 = (political_engagement_score_scaled + 2 * investment_per_capita_scaled +  protected_areas_2022_percent_scaled)/4)
+  mutate(dim_1 = (emissions_per_capita_scaled * 4 + municipal_solid_waste_per_capita_scaled)/5) |>
+  mutate(dim_2 = (political_engagement_score_scaled * 3 + investment_per_capita_scaled + protected_areas_2022_percent_scaled)/5)
 
 ```
 
@@ -150,11 +152,11 @@ WAICC$quadrant <- with(WAICC, ifelse(dim_1 < 0 & dim_2 < 0, "Bottom Left",
                               "Top Right"))))
 plot_1 <- WAICC |> ggplot() +
   geom_point(aes(dim_1,dim_2,color = dim_1 + dim_2)) +
-  scale_color_gradient(low = "red", high = "green") +
+  scale_color_gradient(low = "red", high = "green", limits = c(-2,2)) +
   xlab("Climate Change Impact per Capita") +
   ylab("Contribution to change per capita") +
   xlim(-1,1) + ylim(-1,1) +
-  geom_text_repel(aes(dim_1, dim_2, label = country), size = 2, force = 5) +
+  geom_text_repel(aes(dim_1, dim_2, label = ISO), size = 1.5, force = 1, max.overlaps = 15) +
   ggtitle("Climate Impact plotted against Accountability") +
   geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
   geom_hline(yintercept = 0, linetype = "dashed", color = "black")
@@ -165,7 +167,7 @@ plot_1
 ```{r plot 2}
   plot_2 <- WAICC |> ggplot() +
   geom_point(aes(dim_1,dim_2,color = dim_1 + dim_2)) +
-  scale_color_gradient(low = "red", high = "green") +
+  scale_color_gradient(low = "red", high = "green", limits = c(-2,2)) +
   xlab("Climate Change Impact per Capita") +
   ylab("Contribution to change per capita") +
   xlim(-1,1) + ylim(-1,1) +
@@ -235,7 +237,7 @@ ggsave("plots/plot_4.png", plot_4, width = 10, height = 8, dpi = 300)
 
 ```{r}
 WAICC$ISO <- substr(WAICC$ISO, 1, nchar(WAICC$ISO) - 1)
-write.csv(WAICC, "/Users/jonguler/Library/Mobile Documents/com~apple~CloudDocs/Uni/Semester/8. Semester/GEO 888/Project/WAICC.csv")
+write.csv(WAICC, "WAICC.csv")
 
 ```
 
