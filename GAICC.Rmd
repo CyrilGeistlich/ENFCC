@@ -233,3 +233,9 @@ ggsave("plots/plot_3.png", plot_3, width = 10, height = 8, dpi = 300)
 ggsave("plots/plot_4.png", plot_4, width = 10, height = 8, dpi = 300)
 ```
 
+```{r}
+WAICC$ISO <- substr(WAICC$ISO, 1, nchar(WAICC$ISO) - 1)
+write.csv(WAICC, "/Users/jonguler/Library/Mobile Documents/com~apple~CloudDocs/Uni/Semester/8. Semester/GEO 888/Project/WAICC.csv")
+
+```
+
