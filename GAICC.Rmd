@@ -25,11 +25,11 @@ political_engagement <- read_delim("data/Political_Engagement.csv",",")
 waste <- read_delim("data/waste_data.csv",",")
 public_investment <- read_delim("data/Public_Investment_2020.csv",",")
 protected_areas <- read_delim("data/protected_areas.csv",",")
-emissions <- read_delim("data/co_eq_emissions.csv",";")
+emissions <- read_delim("data/emissions.csv",";")
 
-#CO2-Emissions
-colnames(emissions) <- c("country", "ISO", "emissions_per_capita")
-emissions <- emissions[-1,-1]
+emissions <- emissions[,-c(2)]
+emissions$emissions_co2 <- emissions$emissions_co2 * 1000
+
 # Political Engagement
 # Remove top 3 empty entries, rename
 political_engagement <- political_engagement[-c(1:3),-c(1,4:6)] |>
@@ -102,24 +102,21 @@ scale_values_positive <- function(x) {
  2*(x/max(x))-1
 }
 
-scale_values_negative <- function(x) {
- ((x - min(x)) / (max(x) - min(x))) * 2 -1
-}
-
 ```
 
 ```{r calc index}
-#Sum of emissions % percent
-WAICC$emissions_per_capita_percent <- WAICC$emissions_per_capita/sum(WAICC$emissions_per_capita) * 100
-
 #Norm data by population
 WAICC <- WAICC |>
   mutate(municipal_solid_waste_per_capita = municipal_solid_waste/population * 10**4) |>
-  mutate(investment_per_capita = total_investment_million_usd*10**6/population)
+  mutate(investment_per_capita = total_investment_million_usd*10**6/population) |>
+  rename(emissions_per_capita = emissions_co2)
+
+#Scale emissions, so that 700kg co2 = 0
+WAICC$emissions_per_capita_700 <- ((WAICC$emissions_per_capita - 700)/700)
+WAICC$emissions_per_capita_700_scaled <- (-WAICC$emissions_per_capita/max(WAICC$emissions_per_capita))* 2 + 1
 
 columns_to_scale_p <- c("political_engagement_score","investment_per_capita","protected_areas_2022_percent")
 
-columns_to_scale_n <- c("municipal_solid_waste_per_capita", "emissions_per_capita")
 
 #positive rescale columns between -1 and 1
 for (col in columns_to_scale_p) {
@@ -127,10 +124,9 @@ for (col in columns_to_scale_p) {
   WAICC[, new_col_name] <- scale_values_positive(WAICC[, col])
 }
 
-for (col in columns_to_scale_n) {
-  new_col_name <- paste0(col, "_scaled")
-  WAICC[, new_col_name] <- scale_values_negative(WAICC[, col])
-}
+
+
+ 
 ```
 
 ```{r calc Index dimensions}
@@ -140,7 +136,7 @@ for (col in columns_to_scale_n) {
 # The weights for dim 2 are political engagement: 1, investement_per_capita: 2.
 
 WAICC <- WAICC |>
-  mutate(dim_1 = (emissions_per_capita_scaled * 4 + municipal_solid_waste_per_capita_scaled)/5) |>
+  mutate(dim_1 = emissions_per_capita_700_scaled) |>
   mutate(dim_2 = (political_engagement_score_scaled + 2 * investment_per_capita_scaled +  protected_areas_2022_percent_scaled)/4)
 
 ```
