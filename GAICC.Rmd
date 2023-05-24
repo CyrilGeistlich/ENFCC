@@ -177,7 +177,7 @@ plot_1
   geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
     geom_rect(aes(xmin = 0, xmax = 1, ymin = 0, ymax = 1),
             fill = "lightgreen", alpha = 0.2) +
-  geom_text(x = 0.5, y = 0.5, label = "Good Area", color = "black", size = 5, fontface = "bold")
+  geom_text(x = 0.5, y = 0.5, label = "Satisfactory", color = "black", size = 5, fontface = "bold")
 plot_2
 ```
 
@@ -224,7 +224,7 @@ plot_4 <- ggplot(WAICC) +
   ggtitle("Climate Impact plotted against Accountability") +
   geom_rect(aes(xmin = 0, xmax = 1, ymin = 0, ymax = 1),
             fill = "lightgreen", alpha = 0.2) +
-  geom_text(x = 0.5, y = 0.5, label = "The Good Area", color = "black", size = 5, fontface = "bold")
+  geom_text(x = 0.5, y = 0.5, label = "Satisfactory", color = "black", size = 5, fontface = "bold")
 plot_4
 ```
 
