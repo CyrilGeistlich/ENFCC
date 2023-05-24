@@ -189,15 +189,15 @@ plot_3 <- WAICC |> ggplot() +
   ggtitle("Climate Impact plotted against Accountability") +
   geom_rect(aes(xmin = 0, xmax = 1, ymin = 0, ymax = 1),
             fill = "lightgreen", alpha = 0.2) +
-  geom_text(x = 0.5, y = 0.5, label = "Good Area", color = "black", size = 5, fontface = "bold") +
+  geom_text(x = 0.5, y = 0.5, label = "Satisfactory", color = "black", size = 5, fontface = "bold") +
   geom_rect(aes(xmin = -1, xmax = 0, ymin = -1, ymax = 0),
             fill = "red", alpha = 0.2) +
-  geom_text(x = -0.5, y = -0.5, label = "Bad Area", color = "black", size = 5, fontface = "bold") +  geom_rect(aes(xmin = 0, xmax = 1, ymin = -1, ymax = 0),
+  geom_text(x = -0.5, y = -0.5, label = "Not Sufficient", color = "black", size = 5, fontface = "bold") +  geom_rect(aes(xmin = 0, xmax = 1, ymin = -1, ymax = 0),
             fill = "orange", alpha = 0.2) +
-  geom_text(x = 0.5, y = -0.5, label = "OK Area", color = "black", size = 5, fontface = "bold")   +
+  geom_text(x = 0.5, y = -0.5, label = "Neutral", color = "black", size = 5, fontface = "bold")   +
   geom_rect(aes(xmin = -1, xmax = 0, ymin = 0, ymax = 1),
             fill = "orange", alpha = 0.2) +
-  geom_text(x = -0.5, y = 0.5, label = "OK Area", color = "black", size = 5, fontface = "bold") +
+  geom_text(x = -0.5, y = 0.5, label = "Neutral", color = "black", size = 5, fontface = "bold") +
     geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
   geom_hline(yintercept = 0, linetype = "dashed", color = "black")
 plot_3
