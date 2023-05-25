@@ -70,13 +70,31 @@ public_investment <- public_investment |>
   summarize(total_investment_million_usd = sum(investment_usd))
 
 #Prep protected areas Data
-protected_areas <- protected_areas[,-c(1:2,5:10)]
+protected_areas <- protected_areas[,-c(1:2,5:6)]
 protected_areas <- protected_areas |>
   rename(ISO = `Country Code`,
          country = `Country Name`,
+         `protected_areas_2018_percent` = `2018 [YR2018]`,
+         `protected_areas_2019_percent` = `2019 [YR2019]`,
+         `protected_areas_2020_percent` = `2020 [YR2020]`,
+         `protected_areas_2021_percent` = `2021 [YR2021]`,
          `protected_areas_2022_percent` = `2022 [YR2022]`) 
-protected_areas$`protected_areas_2022_percent` <- as.numeric(protected_areas$`protected_areas_2022_percent`)
 
+protected_areas <- mutate_at(protected_areas, 
+            vars(protected_areas_2018_percent,
+                 protected_areas_2019_percent,
+                 protected_areas_2020_percent,
+                 protected_areas_2021_percent,
+                 protected_areas_2022_percent), as.numeric)
+
+  protected_areas <- protected_areas |>
+    mutate(five_year_average_pa = (protected_areas_2018_percent +
+             protected_areas_2019_percent +
+             protected_areas_2020_percent + 
+             protected_areas_2021_percent +
+             protected_areas_2022_percent)/5)
+
+#Waste
 waste <- waste[,-c(2,3)]
 
 ```
@@ -123,7 +141,7 @@ WAICC <- WAICC |>
 columns_to_scale_p <- c("political_engagement_score","investment_per_capita","protected_areas_2022_percent")
 
 
-#positive rescale columns between -1 and 1
+#positive rescale columns between 0 and 1
 for (col in columns_to_scale_p) {
   new_col_name <- paste0(col, "_scaled")
   WAICC[, new_col_name] <- scale_values_positive(WAICC[, col])
@@ -135,7 +153,7 @@ for (col in columns_to_scale_p) {
 #The Index consists of 2 dimensions, dim one for the impact on climate change and dim two for the accountability
 
 # The weights for dim 1 are Emissions (sclaed log): 4, Waste: 1
-# The weights for dim 2 are political engagement: 1, investement_per_capita: 2.
+# The weights for dim 2 are political engagement: 3, investement_per_capita: 1 + proteced_areas: 1.
 
 WAICC <- WAICC |>
   mutate(dim_1 = (emissions_per_capita_scaled * 4 + municipal_solid_waste_per_capita_scaled)/5) |>
