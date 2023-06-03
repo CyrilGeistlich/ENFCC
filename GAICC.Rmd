@@ -1,6 +1,6 @@
 ---
 title: "GAICC"
-author: "Cyril Geistlich"
+author: "Cyril Geistlich Vilicht"
 date: "2023-05-19"
 output: html_document
 ---
