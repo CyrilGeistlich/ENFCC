@@ -1,0 +1,128 @@
+---
+title: "R Notebook"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r}
+library("pacman")
+p_load("here")
+p_load("tidyverse")
+```
+
+
+```{r}
+pam_file = here("Data", "pam.xlsx")
+expost_pam_file = here("Data", "expost_pam.xlsx")
+lulucf_file = here("Data", "lulucf.xlsx")
+emissions_file = here("Data", "emissions.xlsx")
+population_file = here("Data", "population_oecd.xlsx")
+iso_file = here("Data", "ISO.xlsx") # Copied from IMF dataset
+
+```
+
+```{r}
+pam_raw = readxl::read_excel(pam_file)
+expost_pam_raw = readxl::read_excel(expost_pam_file)
+lulucf_raw = readxl::read_excel(lulucf_file)
+emissions_raw = readxl::read_excel(emissions_file)
+population_raw = readxl::read_excel(population_file)
+iso_raw = readxl::read_excel(iso_file) %>% unique()
+
+```
+
+
+```{r}
+#Population
+population <- population_raw %>% filter(TIME==2021, SUBJECT=="TOT") %>% rename("ISO3"=LOCATION, "pop"=Value) %>% left_join(iso_raw) %>% select(ISO2, pop) %>% mutate(pop=pop*10**6)
+```
+
+
+```{r}
+#PAM
+# Filter out Policy groups to avoid duplicates
+single_pams <- pam_raw %>% filter(`Single policy or measure, or group of measures`=="Single")
+# Select only columns of interest
+single_pams <- single_pams %>% select(Country, CountryCode, `Sector(s) affected`, `Status of implementation`, `Implementation period start`, `Implementation period finish`, c(32:47))
+
+# Sum up total GHG emission reduction in 2025 and group by Status of Implementation (Implemented, Planned, Adopted, Expired, NA)
+tot_pams <- single_pams %>% group_by(Country, `Status of implementation`) %>%
+  summarise(Total_GHG_Reductions_2025 = sum(`Total GHG emissions reductions in 2025 (kt CO2eq/y)`, na.rm = TRUE)) %>%
+  ungroup()
+
+# Sum up total GHG emission reduction in 2030 and group by Status of Implementation (Implemented, Planned, Adopted, Expired, NA)
+tot_pams <- single_pams %>% group_by(Country, `Status of implementation`) %>%
+  summarise(Total_GHG_Reductions_2030 = sum(`Total GHG emissions reductions in 2030 (kt CO2eq/y)`, na.rm = TRUE)) %>%
+  ungroup() %>% left_join(tot_pams,.)
+
+# Sum up total GHG emission reduction in 2035 and group by Status of Implementation (Implemented, Planned, Adopted, Expired, NA)
+tot_pams <- single_pams %>% group_by(Country, `Status of implementation`) %>%
+  summarise(Total_GHG_Reductions_2035 = sum(`Total GHG emissions reductions in 2035 (kt CO2eq/y)`, na.rm = TRUE)) %>%
+  ungroup() %>% left_join(tot_pams,.)
+
+# Sum up total GHG emission reduction in 2040 and group by Status of Implementation (Implemented, Planned, Adopted, Expired, NA)
+tot_pams <- single_pams %>% group_by(Country, `Status of implementation`) %>%
+  summarise(Total_GHG_Reductions_2040 = sum(`Total GHG emissions reductions in 2040 (kt CO2eq/y)`, na.rm = TRUE)) %>%
+  ungroup() %>% left_join(tot_pams,.)
+
+# Overall Total of 2025 - 2040
+tot_pams <- tot_pams %>% mutate(tot_tot = rowSums(.[c(3:6)], na.rm=TRUE))
+
+# Weight per Implementation Implemented: 30%, Adopted: 10%, Planned: 10%, Expired & NA: 0%
+# TODO Maybe consider time until implemented? Higher weight if near future?
+tot_pams <- tot_pams %>% mutate(weight=0) %>% mutate(weight=as.numeric(ifelse(.$`Status of implementation` == "Implemented", 0.3,
+                                                          ifelse(.$`Status of implementation` == "Adopted", 0.1,
+                                                          ifelse(.$`Status of implementation` == "Planned", 0.1, .$weight)))))
+#Weighted overall total of 2025-2040
+tot_pams <- tot_pams %>% mutate(weighted_tot_tot=tot_tot*weight)
+
+#Summarized by country until 2040 [kT CO2eq]
+per_country_tot_pams <- tot_pams %>% group_by(Country) %>% summarise(Total_Weighted_Reduction = sum(weighted_tot_tot, na.rm=TRUE)*-1) %>% ungroup()
+per_country_tot_pams <- per_country_tot_pams %>% rename("country"=Country)
+per_country_tot_pams <- per_country_tot_pams %>% mutate(country=ifelse(.$country=="Czech Republic",
+                                                                   "Czechia",
+                                                                   .$country))
+```
+
+```{r}
+# Expost PAM
+expost_pam_country <- expost_pam_raw %>% select(-c(1:2)) %>% t() %>% as.data.frame() %>% select(c(2,4))
+names(expost_pam_country) <- c("no_expost", "expost")
+expost_pam_country$country = rownames(expost_pam_country)
+expost_pam_country[2][is.na(expost_pam_country[2])] <- 0
+
+```
+
+```{r}
+# LULUCF
+# Select only columns of interest
+lulucf <- lulucf_raw %>% select(country, net_cost) %>% rename("lulucf"=net_cost)
+lulucf <- lulucf %>% mutate(lulucf_weighted=ifelse(.$lulucf < 0,.$lulucf*0.2,.$lulucf*0.6))
+
+```
+
+```{r}
+# GHG Emissions
+# Select only columns of interest
+emission <- emissions_raw %>% left_join(population) %>%  select(country, emissions, pop)
+emission <- emission %>% mutate(weighted_emissions=emissions/pop*0.8) # [kt CO2eq per capita]
+
+```
+
+```{r}
+# Join all tables into one
+all_data <- per_country_tot_pams %>% left_join(expost_pam_country) %>% left_join(lulucf) %>% left_join(emission)
+all_data <- all_data %>% mutate(netto = rowSums(.[c(2,6,8)],na.rm=TRUE))
+```
+
+```{r}
+# Naive Normalization attempt (does not work!)
+eaicc <- function(all_countries) {
+  global_sum = abs(sum(all_countries$netto))
+  all_countries <- all_countries %>% mutate("eaicc_score"=.$netto/global_sum)
+  return(all_countries)
+}
+result <- eaicc(all_data)
+```
+
