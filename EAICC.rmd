@@ -7,6 +7,11 @@ editor_options:
 
 ```{r}
 library("pacman")
+library("zoo")
+library("ggplot2")
+library("ggrepel")
+library("dplyr")
+library("readr")
 p_load("here")
 p_load("tidyverse")
 ```
@@ -211,3 +216,9 @@ ggplot(eaicc) +
   theme_bw()
 ```
 
+- Normieren auf Emissionen auf Personen und Senken auf Fläche
+- Ein absoluter Plot
+- Overall Score berechnen von den EU Länder
+- Gewichtung anpassen
+- Mit min-max -> müsste Referenzperiode wählen um so zu vergleichen (gleiche min, max values über die Jahre) 
+so gewählt damit aber momentan reproduzierbar
