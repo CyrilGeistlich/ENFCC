@@ -19,6 +19,7 @@ lulucf_file = here("Data", "lulucf.xlsx")
 emissions_file = here("Data", "emissions.xlsx")
 population_file = here("Data", "population_oecd.xlsx")
 iso_file = here("Data", "ISO.xlsx") # Copied from IMF dataset
+projection_file = here("Data", "projections.xlsx")
 
 ```
 
@@ -29,6 +30,7 @@ lulucf_raw = readxl::read_excel(lulucf_file)
 emissions_raw = readxl::read_excel(emissions_file)
 population_raw = readxl::read_excel(population_file)
 iso_raw = readxl::read_excel(iso_file) %>% unique()
+projection_raw = readxl::read_excel((projection_file))
 
 ```
 
@@ -130,18 +132,27 @@ lulucf <- lulucf %>% mutate(lulucf_weighted=ifelse(.$lulucf < 0,.$lulucf*0.5,.$l
 ```
 
 ```{r}
+#GHG Projection Total inc. int. Aviation excl. LULUCF for WAM-Scario (with additional measures)
+# TODO Discuss if either WEM or WAM should be used. 
+projection <- projection_raw %>% filter((Category=="Total excluding LULUCF (incl. Int. Aviation)") &  (Year==2021) & (Gas=="Total GHG emissions (ktCO2e)") & (Scenario=="WAM")) %>% rename("ISO2"=CountryCode) %>% left_join(iso_raw)  %>% rename("projection"="Final/Gap-filled")
+```
+
+```{r}
 # GHG Emissions in K kt CO2 eq
 # Select only columns of interest
-emission <- emissions_raw %>% left_join(population) %>%  select(country, emissions, pop)
+emission <- emissions_raw %>% left_join(population) %>% left_join(projection) %>%  select(country, emissions, pop, projection)
 emission <- emission %>% mutate(emissions=emissions*1000) # [kt CO2eq] K kt -> kt CO2 eq
 emission <- emission %>% mutate(weighted_emissions=emissions*.8) # [kt CO2eq]
 emission <- emission %>% mutate(weighted_emissions_pop=emissions/pop*1000*0.8) # [kt CO2eq per capita]
+emission <- emission %>% mutate(projeced_emission_pop=projection/pop*1000) # TODO(?) [kt CO2eq per capita] /!\ NOT WEIGHTED /!\
 ```
+
 
 ```{r}
 # Join all tables into one
 all_data <- per_country_pams_2030 %>% left_join(expost_pam_country) %>% left_join(lulucf) %>% left_join(emission)
-all_data <- all_data %>% mutate(netto = rowSums(.[c(2,6,9)],na.rm=TRUE))
+# TODO /!\ Check if all columns that should be summed up are included here /!\ 
+all_data <- all_data %>% mutate(netto = rowSums(.[c(2,6, 10, 11, 12)],na.rm=TRUE))
 ```
 
 ```{r}
