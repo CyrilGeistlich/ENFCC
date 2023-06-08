@@ -200,3 +200,7 @@ ggplot(eaicc) +
   theme_bw()
 ```
 
+TO DO
+
+- per capita -> population mit einbeziehen 
+- Gewichtung anpassen
