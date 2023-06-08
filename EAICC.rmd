@@ -211,8 +211,8 @@ ggplot(eaicc) +
   ylab("Climate change mitigation potential 2030 [kT CO2 eq]") + # Mitigation potential assuming LULUCFs to stay approximately constant
   geom_abline(slope = 1, linetype = "dashed") +
   geom_text(x = 260000, y = 230000, label = "Net-Zero-Goal 2030", hjust = -0.1, vjust = -0.1, size = 2, angle = 47) +
-  geom_text_repel(aes(weighted_emissions, tot_mit_reverse, label = country), size = 1.5, force = 1, max.overlaps = 50) +
-  scale_color_gradient(low = "red", high = "green") +
+  geom_text_repel(aes(weighted_emissions, tot_mit_reverse, label = country), size = 2, force = 1, max.overlaps = 50) +
+  scale_color_gradient(low = "black", high = "lightgreen") +
   theme_bw()
 ```
 
@@ -220,5 +220,5 @@ ggplot(eaicc) +
 - Ein absoluter Plot
 - Overall Score berechnen von den EU Länder
 - Gewichtung anpassen
-- Mit min-max -> müsste Referenzperiode wählen um so zu vergleichen (gleiche min, max values über die Jahre) 
-so gewählt damit aber momentan reproduzierbar
+- Abstände zu Net-Zero Linie
+- klassifizieren von den Index-Werten (5 Werte)
