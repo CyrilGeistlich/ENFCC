@@ -12,6 +12,7 @@ library("ggplot2")
 library("ggrepel")
 library("dplyr")
 library("readr")
+library("caret")
 p_load("here")
 p_load("tidyverse")
 ```
@@ -245,9 +246,47 @@ ggplot(eaicc_per_capita) +
   theme_bw()
 ```
 
+
+```{r Index Score}
+
+# The Index Score is calculated as the minimal distance of a point to the net-zero line.
+# Positive values lie above the line an negative values below. There is no min or max value, however a higher index equals a better perfomance. 
+
+# X: weighted_projected_emissions Y: tot_mit_reverse,
+# y = x
+
+# Function to calculate the minimum distance
+min_distance_to_line <- function(x, y) {
+  distance <- (y - x)/ sqrt(2)  # Perpendicular distance formula
+  return(distance)
+}
+
+# When comparing multiple years replace max(score) with absolute value
+scale_index <- function(score) {
+  zero <- ((0 + abs(min(score)))/max(score)) #defines net zero boundary
+  score <- ((score + abs(min(score)))/max(score))
+  
+  zero <- zero/max(score)
+  score <- round((score/max(score) - zero) * 100,1)
+  return(score)
+}
+
+# Calculate the minimum distance for each point
+eaicc <- eaicc |>
+  mutate(score = min_distance_to_line(eaicc$weighted_projected_emissions, eaicc$tot_mit_reverse))
+
+eaicc_per_capita  <- eaicc_per_capita |>
+  mutate(score = min_distance_to_line(eaicc_per_capita$weighted_projected_emissions_pop, eaicc_per_capita$tot_mit_reverse_pop))
+
+eaicc_index <- data.frame(country = eaicc$country, score_per_capita = eaicc_per_capita$score,score = eaicc$score) 
+eaicc_index$score <- scale_index(eaicc_index$score)
+eaicc_index$score_per_capita <- scale_index(eaicc_index$score_per_capita)
+
+```
+
 - Normieren auf Emissionen auf Personen und Senken auf Fläche
 - Ein absoluter Plot
-- Overall Score berechnen von den EU Länder
+- Overall Score berechnen von den EU Länder 
 - Gewichtung anpassen
 - Abstände zu Net-Zero Linie
 - klassifizieren von den Index-Werten (5 Werte)
