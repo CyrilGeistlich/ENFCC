@@ -241,7 +241,7 @@ rm(all_data, emission, emissions_raw, expost_pam_country, expost_pam_raw, iso_ra
 
 
 ```{r Mapping}
-ggplot(eaicc) +
+netline <- ggplot(eaicc) +
   geom_point(aes(weighted_projected_emissions, tot_mit_reverse, color = EAICC)) +
   xlab("Climate Change Impact: \n Projected GHG emissions for 2030 [kT CO2 eq]") +
   ylab("Climate change Mitigation Potential in 2030 [kT CO2 eq]") + # Mitigation potential assuming LULUCFs to stay approximately constant
@@ -253,7 +253,7 @@ ggplot(eaicc) +
   theme_bw()
 
 # Per capita
-ggplot(eaicc_per_capita) +
+netline_per_capita <- ggplot(eaicc_per_capita) +
   geom_point(aes(weighted_projected_emissions_pop, tot_mit_reverse_pop, color = EAICC_pop)) +
   xlab("Climate Change Impact per Capita: \n Projected GHG emissions for 2030 [kT CO2 eq]") +
   ylab("Climate change Mitigation Potential: \n per capita in 2030 [kT CO2 eq]") + # Mitigation potential assuming LULUCFs to stay approximately constant
@@ -264,6 +264,9 @@ ggplot(eaicc_per_capita) +
                   size = 2, force = 1, max.overlaps = 50) +
   scale_color_gradient(low = "red", high = "blue") +
   theme_bw()
+
+ggsave("plots/netline.png", plot = netline, width = 10, height = 6, dpi = 300)
+ggsave("plots/netline_per_capita.png", plot = netline_per_capita, width = 10, height = 6, dpi = 300)
 ```
 
 
@@ -301,6 +304,52 @@ eaicc_per_capita  <- eaicc_per_capita |>
 eaicc_index <- data.frame(country = eaicc$country, score_per_capita = eaicc_per_capita$score,score = eaicc$score) 
 eaicc_index$score <- scale_index(eaicc_index$score)
 eaicc_index$score_per_capita <- scale_index(eaicc_index$score_per_capita)
+
+```
+
+
+```{r}
+
+eaicc_index <- eaicc_index %>%
+  arrange(desc(score)) %>%
+  mutate(country = factor(country, levels = unique(country)))
+
+index <- ggplot(eaicc_index, aes(country, score, fill = score >= 0)) +
+  geom_bar(stat = "identity", width = 0.8) +
+  scale_fill_manual(values = c("lightpink", "skyblue")) +
+  labs(x = "Country", y = "Score") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust = 1),
+        axis.title = element_text(size = 12, face = "bold"),
+        plot.title = element_text(size = 16, face = "bold"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank()) +
+  scale_x_discrete(limits = rev(levels(eaicc_index$country))) +
+  ggtitle("EAICC Score per Country")
+
+
+
+eaicc_index <- eaicc_index %>%
+  arrange(desc(score_per_capita)) %>%
+  mutate(country = factor(country, levels = unique(country)))
+
+index_per_capita <- ggplot(eaicc_index, aes(country, score_per_capita, fill = score_per_capita >= 0)) +
+  geom_bar(stat = "identity", width = 0.8) +
+  scale_fill_manual(values = c("lightpink", "skyblue")) +
+  labs(x = "Country", y = "Score") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust = 1),
+        axis.title = element_text(size = 12, face = "bold"),
+        plot.title = element_text(size = 16, face = "bold"),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.background = element_blank()) +
+  scale_x_discrete(limits = rev(levels(eaicc_index$country))) +
+  ggtitle("EAICC Score per Country and Capita")
+
+ggsave("plots/index.png", plot = index, width = 10, height = 6, dpi = 300)
+ggsave("plots/index_per_capita.png", plot = index_per_capita, width = 10, height = 6, dpi = 300)
+
+
 
 ```
 
