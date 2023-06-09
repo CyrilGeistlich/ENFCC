@@ -140,13 +140,19 @@ lulucf <- lulucf %>% mutate(lulucf_weighted=ifelse(.$lulucf < 0,.$lulucf*0.4,.$l
 ```{r}
 #GHG Projection Total inc. int. Aviation excl. LULUCF for WAM-Scenario 
 # WAM also includes the additional effects of planned measures.
-projection <- projection_raw %>% filter((Category=="Total excluding LULUCF (incl. Int. Aviation)") &  (Year==2021) & (Gas=="Total GHG emissions (ktCO2e)") & (Scenario=="WAM")) %>% rename("ISO2"=CountryCode) %>% left_join(iso_raw)  %>% rename("projection"="Final/Gap-filled")
+projection <- projection_raw %>% 
+  filter((Category=="Total excluding LULUCF (incl. Int. Aviation)") &  (Year==2021) & (Gas=="Total GHG emissions (ktCO2e)") & (Scenario=="WAM")) %>%
+  rename("ISO2"=CountryCode) %>% left_join(iso_raw)  %>% rename("projection"="Final/Gap-filled")
 ```
 
 ```{r}
 # GHG Emissions in K kt CO2 eq
 # Select only columns of interest
-emission <- emissions_raw %>% left_join(population) %>% left_join(projection) %>%  select(country, emissions, pop, projection)
+emission <- emissions_raw %>% 
+  left_join(population) %>% 
+  left_join(projection) %>%  
+  select(country, emissions, pop, projection)
+
 emission$emissions <- emission$emissions *1000 # [kt CO2eq] K kt -> kt CO2 eq
 #emission <- emission %>% mutate(weighted_emissions=emissions*.6) # [kt CO2eq]
 emission <- emission %>% mutate(weighted_projected_emissions=projection*.6)
@@ -156,10 +162,15 @@ emission <- emission %>% mutate(weighted_projected_emission_pop=projection/pop*.
 
 ```{r}
 # Join all tables into one
-all_data <- per_country_pams_2030 %>% left_join(expost_pam_country) %>% left_join(lulucf) %>% left_join(emission)
+all_data <- per_country_pams_2030 %>% 
+  left_join(expost_pam_country) %>% 
+  left_join(lulucf) %>% 
+  left_join(emission)
+
 # Calculate netto for each country (weighted impact + mitigation (mitigation is negative): 
 # net = (0.6*proj.emission + 0.4*LULUCF sources) - (0.4*LULUCF sinks + 0.4*implemented PAMs + 0.1*adopted PAMs + 0.1*planned PAMs)
-all_data <- all_data %>% mutate(netto = rowSums(.[c(2,6,10)],na.rm=TRUE))
+all_data <- all_data %>% 
+  mutate(netto = rowSums(.[c(2,6,10)],na.rm=TRUE))
 ```
 
 Drop rows with NA values: Unfortunately, Norway has no WAM predictions!!!
@@ -196,7 +207,8 @@ eaicc <- eaicc %>% mutate(tot_mit_reverse = tot_mit * -1) %>%
 
 # Per Capita
 eaicc_per_capita <- all_data %>% select(country, weighted_projected_emissions, tot_mit, pop)
-eaicc_per_capita <- eaicc_per_capita %>% mutate(tot_mit_reverse = tot_mit * -1) %>% 
+eaicc_per_capita <- eaicc_per_capita %>% 
+  mutate(tot_mit_reverse = tot_mit * -1) %>% 
   mutate(netto_pop = rowSums(.[c(2,3)], na.rm=TRUE)/pop) %>% #impact - mitigation 
   mutate(weighted_projected_emissions_pop = weighted_projected_emissions/pop) %>%
   mutate(tot_mit_pop = tot_mit / pop) %>%
@@ -219,6 +231,14 @@ eaicc$EAICC <- fun_range_reverse(x = eaicc$netto)
 
 eaicc_per_capita$EAICC_pop <- fun_range_reverse(x = eaicc_per_capita$netto_pop)
 ```
+
+```{r clean env}
+# Keep working env clean
+rm(all_data, emission, emissions_raw, expost_pam_country, expost_pam_raw, iso_raw,
+   lulucf, lulucf_raw, pam_raw, pams_2030, per_country_pams_2030, population, population_raw,
+   projection, projection_raw, single_pams, emissions_file, expost_pam_file, iso_file, lulucf_file, pam_file, population_file, projection_file)
+```
+
 
 ```{r Mapping}
 ggplot(eaicc) +
