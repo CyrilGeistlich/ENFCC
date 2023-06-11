@@ -315,9 +315,26 @@ eaicc_index$score_per_capita <- scale_index(eaicc_index$score_per_capita)
 
 ```
 
+```{r classify index score}
 
-```{r}
 
+eaicc_index <- eaicc_index |>
+  mutate(classification = cut(score, breaks = seq(-100, 100, by = 25),
+                             labels = c("Atrocious", "Terrible", "Very Bad", "Bad", "OK", "Good", "Very Good", "Excellent"),
+                             include.lowest = TRUE, right = FALSE))
+
+
+
+eaicc_index <- eaicc_index |>
+  mutate(classification_per_capita = cut(score_per_capita, breaks = seq(-100, 100, by = 25),
+                             labels = c("Atrocious", "Terrible", "Very Bad", "Bad", "OK", "Good", "Very Good", "Excellent"),
+                             include.lowest = TRUE, right = FALSE))
+```
+
+
+```{r plot eaicc Index score}
+
+# Arrange score acending
 eaicc_index <- eaicc_index %>%
   arrange(desc(score)) %>%
   mutate(country = factor(country, levels = unique(country)))
@@ -335,6 +352,7 @@ index <- ggplot(eaicc_index, aes(country, score, fill = score >= 0)) +
   ggtitle("EAICC Score per Country")
 
 
+#Arranve Score Ascending
 eaicc_index <- eaicc_index %>%
   arrange(desc(score_per_capita)) %>%
   mutate(country = factor(country, levels = unique(country)))
@@ -358,8 +376,6 @@ index_per_capita
 ggsave("plots/index.png", plot = index, width = 10, height = 6, dpi = 300)
 ggsave("plots/index_per_capita.png", plot = index_per_capita, width = 10, height = 6, dpi = 300)
 
-
-
 ```
 
 ```{r}
@@ -368,7 +384,6 @@ write.csv(eaicc, "EAICC.csv")
 
 - Normieren auf Emissionen auf Personen und Senken auf Fläche
 - Ein absoluter Plot
-- Overall Score berechnen von den EU Länder 
 - Gewichtung anpassen
-- Abstände zu Net-Zero Linie
-- klassifizieren von den Index-Werten (5 Werte)
+
+- klassifizieren von den Index-Werten 
