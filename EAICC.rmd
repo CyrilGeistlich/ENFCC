@@ -362,6 +362,10 @@ ggsave("plots/index_per_capita.png", plot = index_per_capita, width = 10, height
 
 ```
 
+```{r}
+write.csv(eaicc, "EAICC.csv")
+```
+
 - Normieren auf Emissionen auf Personen und Senken auf Fläche
 - Ein absoluter Plot
 - Overall Score berechnen von den EU Länder 
