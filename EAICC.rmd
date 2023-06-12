@@ -13,6 +13,7 @@ library("ggrepel")
 library("dplyr")
 library("readr")
 library("caret")
+library("scales")
 p_load("here")
 p_load("tidyverse")
 ```
@@ -180,18 +181,18 @@ all_data <- drop_na(all_data)
 
 ```{r}
 # # Naive Normalization attempt (does not work!)
-# eaicc <- function(all_countries) {
+# enfcc <- function(all_countries) {
 #   global_sum = abs(sum(all_countries$netto))
-#   all_countries <- all_countries %>% mutate("eaicc_score"=.$netto/global_sum)
+#   all_countries <- all_countries %>% mutate("enfcc_score"=.$netto/global_sum)
 #   return(all_countries)
 # }
 # 
-# result <- eaicc(all_data)
+# result <- enfcc(all_data)
 
 # # Attempt without function
 # global_sum = abs(sum(all_data$netto))
 # print(global_sum)
-# all_countries <- all_data %>% mutate("eaicc_score"=.$netto/global_sum)
+# all_countries <- all_data %>% mutate("enfcc_score"=.$netto/global_sum)
 ```
 
 ```{r}
@@ -201,13 +202,13 @@ all_data <- drop_na(all_data)
 all_data <- all_data %>% mutate(tot_mit = rowSums(.[c(2,6)],na.rm=TRUE))
 
 # Creating new df with relevant columns
-eaicc <- all_data %>% select(country, weighted_projected_emissions, tot_mit, pop)
-eaicc <- eaicc %>% mutate(tot_mit_reverse = tot_mit * -1) %>% 
+enfcc <- all_data %>% select(country, weighted_projected_emissions, tot_mit, pop)
+enfcc <- enfcc %>% mutate(tot_mit_reverse = tot_mit * -1) %>% 
   mutate(netto = rowSums(.[c(2,3)], na.rm=TRUE)) #impact - mitigation
 
 # Per Capita
-eaicc_per_capita <- all_data %>% select(country, weighted_projected_emissions, tot_mit, pop)
-eaicc_per_capita <- eaicc_per_capita %>% 
+enfcc_per_capita <- all_data %>% select(country, weighted_projected_emissions, tot_mit, pop)
+enfcc_per_capita <- enfcc_per_capita %>% 
   mutate(tot_mit_reverse = tot_mit * -1) %>% 
   mutate(netto_pop = rowSums(.[c(2,3)], na.rm=TRUE)/pop) %>% #impact - mitigation 
   mutate(weighted_projected_emissions_pop = weighted_projected_emissions/pop) %>%
@@ -225,11 +226,11 @@ fun_range_reverse <- function(x) {
 }
 
 # Use normalization function to scale values between 0 and 1
-eaicc$impact <- fun_range(x = eaicc$weighted_projected_emissions)
-eaicc$mitigation <- fun_range_reverse(x = eaicc$tot_mit)
-eaicc$EAICC <- fun_range_reverse(x = eaicc$netto)
+enfcc$impact <- fun_range(x = enfcc$weighted_projected_emissions)
+enfcc$mitigation <- fun_range_reverse(x = enfcc$tot_mit)
+enfcc$enfcc <- fun_range_reverse(x = enfcc$netto)
 
-eaicc_per_capita$EAICC_pop <- fun_range_reverse(x = eaicc_per_capita$netto_pop)
+enfcc_per_capita$enfcc_pop <- fun_range_reverse(x = enfcc_per_capita$netto_pop)
 ```
 
 ```{r clean env}
@@ -244,37 +245,107 @@ rm(all_data, emission, emissions_raw, expost_pam_country, expost_pam_raw, iso_ra
 # Define custom color gradient
 custom_colors <- c("black", "yellow", "green")
 
-netline <- ggplot(eaicc) +
-  geom_point(aes(weighted_projected_emissions, tot_mit_reverse, color = EAICC)) +
+netline <- ggplot(enfcc) +
+  geom_point(aes(weighted_projected_emissions, tot_mit_reverse, color = enfcc)) +
   xlab("Climate Change Impact: \n Projected GHG emissions for 2030 [kT CO2 eq]") +
-  ylab("Climate change Mitigation Potential in 2030 [kT CO2 eq]") +
-  ggtitle("European Climate Change Accountability Index") +
+  ylab("Climate change Mitigation Potential in 2030 \n[kT CO2 eq]") +
+  ggtitle("European Net Footprint for Climate Change (ENFCC) per Country") +
   geom_abline(slope = 1, linetype = "dashed") +
-  geom_text(x = 200000, y = 180000, label = "Net-Zero-Goal 2030", hjust = -0.1, vjust = -0.1, size = 2, angle = 37) +
+  geom_text(x = 200000, y = 180000, label = "Net-Zero-Goal 2030", hjust = -0.1, vjust = -0.1, size = 4, angle = 37) +
   geom_text_repel(aes(weighted_projected_emissions, tot_mit_reverse, label = country), size = 2, force = 1, max.overlaps = 50) +
   scale_color_gradientn(colors = custom_colors, values = c(0, 0.5, 1), guide = "none") +
-  theme_bw()
+  theme(
+    axis.text.x = element_text(angle = 0, vjust = 0.75, ),
+    axis.title = element_text(size = 12),
+    plot.title = element_text(size = 14),
+    panel.grid.major = element_line(color = "gray", linetype = "dotted"),
+    panel.background = element_rect(fill = NA),
+    panel.border = element_rect(color = "black", fill = NA, size = 0.5)
+  )
+
+netline <- netline + scale_x_continuous(labels = label_number()) + scale_y_continuous(labels = label_number())
 
 
-
-# Per capita
-netline_per_capita <- ggplot(eaicc_per_capita) +
-  geom_point(aes(weighted_projected_emissions_pop, tot_mit_reverse_pop, color = EAICC_pop)) +
-  xlab("Climate Change Impact per Capita: \n Projected GHG emissions for 2030 [kT CO2 eq]") +
-  ylab("Climate change Mitigation Potential: \n per capita in 2030 [kT CO2 eq]") + # Mitigation potential assuming LULUCFs to stay approximately constant
-  ggtitle("European Climate Change Accountability Index per capita") + # Change title!!!!!!
+netline_per_capita <- ggplot(enfcc_per_capita) +
+  geom_point(aes(weighted_projected_emissions_pop, tot_mit_reverse_pop, color = enfcc_pop)) +
+  xlab("Climate Change Impact per Capita \n projected GHG emissions for 2030 [kT CO2 eq]") +
+  ylab("Climate change Mitigation Potential \n per capita in 2030 [kT CO2 eq]") +
+  ggtitle("European Net Footprint for Climate Change (ENFCC) \nper Capita and Country") +
   geom_abline(slope = 1, linetype = "dashed") +
-  # geom_text(x = 0, y = 0, label = "Net-Zero-Goal 2030", hjust = -0.1, vjust = -0.1, size = 2, angle = 10) +
+  geom_text(x = 0.0087, y = -0.01, label = "Net-Zero-Goal 2030", hjust = 0, vjust = 0, size = 4, angle = 0) +
   geom_text_repel(aes(weighted_projected_emissions_pop, tot_mit_reverse_pop, label = country), 
                   size = 2, force = 1, max.overlaps = 50) +
-  scale_color_gradientn(colors = custom_colors, values = c(0, 0.5, 1), guide = "none") +
-  theme_bw()
+  scale_color_gradientn(colors = custom_colors, values = c(0, 0.03, 1), guide = "none") +
+  theme(
+    axis.text.x = element_text(angle = 0, vjust = 1, hjust = 1),
+    axis.title = element_text(size = 12),
+    plot.title = element_text(size = 14),
+    panel.grid.major = element_line(color = "gray", linetype = "dotted"),
+    panel.background = element_rect(fill = NA),
+    panel.border = element_rect(color = "black", fill = NA, size = 0.5)
+  )
+
 
 netline
 netline_per_capita
 
 ggsave("plots/netline.png", plot = netline, width = 10, height = 6, dpi = 300)
 ggsave("plots/netline_per_capita.png", plot = netline_per_capita, width = 10, height = 6, dpi = 300)
+```
+```{r}
+
+netline_zoom <- ggplot(enfcc) +
+  geom_point(aes(weighted_projected_emissions, tot_mit_reverse, color = enfcc)) +
+  xlab("Climate Change Impact: \n Projected GHG emissions for 2030 [kT CO2 eq]") +
+  ylab("Climate change Mitigation Potential in 2030 \n[kT CO2 eq]") +
+  ggtitle("European Net Footprint for Climate Change (ENFCC) per Country") +
+  geom_abline(slope = 1, linetype = "dashed") +
+  geom_text(x = 100000, y = 85000, label = "Net-Zero-Goal 2030", hjust = -0.1, vjust = -0.1, size = 4, angle = 37) +
+  geom_text_repel(aes(weighted_projected_emissions, tot_mit_reverse, label = country), size = 2, force = 1, max.overlaps = 50) +
+  scale_color_gradientn(colors = custom_colors, values = c(0, 0.5, 1), guide = "none") +
+  theme(
+    axis.text.x = element_text(angle = 0, vjust = 0.75),
+    axis.title = element_text(size = 12),
+    plot.title = element_text(size = 14),
+    panel.grid.major = element_line(color = "gray", linetype = "dotted"),
+    panel.background = element_rect(fill = NA),
+    panel.border = element_rect(color = "black", fill = NA, size = 0.5)
+  ) +
+  scale_x_continuous(labels = label_number()) +
+  scale_y_continuous(labels = label_number()) +
+  coord_cartesian(xlim = c(-20000, 250000), ylim = c(-10000, 200000))
+
+
+
+netline_per_capita_zoom <- ggplot(enfcc_per_capita) +
+  geom_point(aes(weighted_projected_emissions_pop, tot_mit_reverse_pop, color = enfcc_pop)) +
+  xlab("Climate Change Impact per Capita \n projected GHG emissions for 2030 [kT CO2 eq]") +
+  ylab("Climate change Mitigation Potential \n per capita in 2030 [kT CO2 eq]") +
+  ggtitle("European Net Footprint for Climate Change (ENFCC) \nper Capita and Country") +
+  geom_abline(slope = 1, linetype = "dashed") +
+  geom_text(x = 0.0087, y = -0.01, label = "Net-Zero-Goal 2030", hjust = 0, vjust = 0, size = 4, angle = 0) +
+  geom_text_repel(aes(weighted_projected_emissions_pop, tot_mit_reverse_pop, label = country), 
+                  size = 2, force = 1, max.overlaps = 50) +
+  scale_color_gradientn(colors = custom_colors, values = c(0, 0.003, 1), guide = "none") +
+  theme(
+    axis.text.x = element_text(angle = 0, vjust = 1, hjust = 1),
+    axis.title = element_text(size = 12),
+    plot.title = element_text(size = 14),
+    panel.grid.major = element_line(color = "gray", linetype = "dotted"),
+    panel.background = element_rect(fill = NA),
+    panel.border = element_rect(color = "black", fill = NA, size = 0.5)
+  ) +
+  scale_x_continuous(labels = label_number()) +
+  scale_y_continuous(labels = label_number()) +
+  coord_cartesian(xlim = c(0.0025, 0.008), ylim = c(-0.0025, 0.025)) +
+  geom_text(x = 0.0065, y = 0.005, label = "Net-Zero-Goal 2030", hjust = 0, vjust = 0, size = 4, angle = 5)
+
+netline_zoom
+netline_per_capita_zoom
+
+ggsave("plots/netline_per_capita_zoom.png", plot = netline_per_capita_zoom, width = 10, height = 6, dpi = 300)
+ggsave("plots/netline_zoom.png", plot = netline_zoom, width = 10, height = 6, dpi = 300)
+
 ```
 
 
@@ -303,43 +374,43 @@ scale_index <- function(score) {
 }
 
 # Calculate the minimum distance for each point
-eaicc <- eaicc |>
-  mutate(score = min_distance_to_line(eaicc$weighted_projected_emissions, eaicc$tot_mit_reverse))
+enfcc <- enfcc |>
+  mutate(score = min_distance_to_line(weighted_projected_emissions, tot_mit_reverse))
 
-eaicc_per_capita  <- eaicc_per_capita |>
-  mutate(score = min_distance_to_line(eaicc_per_capita$weighted_projected_emissions_pop, eaicc_per_capita$tot_mit_reverse_pop))
+enfcc_per_capita  <- enfcc_per_capita |>
+  mutate(score = min_distance_to_line(enfcc_per_capita$weighted_projected_emissions_pop, enfcc_per_capita$tot_mit_reverse_pop))
 
-eaicc_index <- data.frame(country = eaicc$country, score_per_capita = eaicc_per_capita$score,score = eaicc$score) 
-eaicc_index$score <- scale_index(eaicc_index$score)
-eaicc_index$score_per_capita <- scale_index(eaicc_index$score_per_capita)
+enfcc_index <- data.frame(country = enfcc$country, score_per_capita = enfcc_per_capita$score,score = enfcc$score) 
+enfcc_index$score <- scale_index(enfcc_index$score)
+enfcc_index$score_per_capita <- scale_index(enfcc_index$score_per_capita)
 
 ```
 
 ```{r classify index score}
 
 
-eaicc_index <- eaicc_index |>
+enfcc_index <- enfcc_index |>
   mutate(classification = cut(score, breaks = seq(-100, 100, by = 25),
                              labels = c("Atrocious", "Terrible", "Very Bad", "Bad", "OK", "Good", "Very Good", "Excellent"),
                              include.lowest = TRUE, right = FALSE))
 
 
 
-eaicc_index <- eaicc_index |>
+enfcc_index <- enfcc_index |>
   mutate(classification_per_capita = cut(score_per_capita, breaks = seq(-100, 100, by = 25),
                              labels = c("Atrocious", "Terrible", "Very Bad", "Bad", "OK", "Good", "Very Good", "Excellent"),
                              include.lowest = TRUE, right = FALSE))
 ```
 
 
-```{r plot eaicc Index score}
+```{r plot enfcc Index score}
 
 # Arrange score acending
-eaicc_index <- eaicc_index %>%
+enfcc_index <- enfcc_index %>%
   arrange(desc(score)) %>%
   mutate(country = factor(country, levels = unique(country)))
 
-index <- ggplot(eaicc_index, aes(country, score, fill = score >= 0)) +
+index <- ggplot(enfcc_index, aes(country, score, fill = score >= 0)) +
   geom_bar(stat = "identity", width = 0.8) +
   scale_fill_manual(values = c("gray", "lightgreen"), guide = "none") +
   labs(x = "Country", y = "Score") +
@@ -348,27 +419,27 @@ index <- ggplot(eaicc_index, aes(country, score, fill = score >= 0)) +
         plot.title = element_text(size = 16, face = "bold"),
         panel.grid.major.y = element_line(color = "gray", linetype = "dotted"),
         panel.background = element_blank()) +
-  scale_x_discrete(limits = rev(levels(eaicc_index$country))) +
-  ggtitle("EAICC Score per Country")
+  scale_x_discrete(limits = rev(levels(enfcc_index$country))) +
+  ggtitle("European Net Footprint for Climate Change (ENFCC) \nScore per Country")
 
 
 #Arranve Score Ascending
-eaicc_index <- eaicc_index %>%
+enfcc_index <- enfcc_index %>%
   arrange(desc(score_per_capita)) %>%
   mutate(country = factor(country, levels = unique(country)))
 
-index_per_capita <- ggplot(eaicc_index, aes(country, score_per_capita, fill = score_per_capita >= 0)) +
+index_per_capita <- ggplot(enfcc_index, aes(country, score_per_capita, fill = score_per_capita >= 0)) +
   geom_bar(stat = "identity", width = 0.8) +
   scale_fill_manual(values = c("gray", "lightgreen"),guide = "none") +
   labs(x = "Country", y = "Score") +
   theme(axis.text.x = element_text(angle = 45, vjust = 0.75, hjust = 1),
         axis.title = element_text(size = 12, face = "bold"),
-        plot.title = element_text(size = 16, face = "bold"),
+        plot.title = element_text(size = 14, face = "bold"),
         panel.grid.major.y = element_line(color = "gray", linetype = "dotted"),
         panel.grid.minor = element_blank(),
         panel.background = element_blank()) +
-  scale_x_discrete(limits = rev(levels(eaicc_index$country))) +
-  ggtitle("EAICC Score per Country and Capita")
+  scale_x_discrete(limits = rev(levels(enfcc_index$country))) +
+  ggtitle("European Net Footprint for Climate Change (ENFCC) \nScore per Country and Capita")
 
 index
 index_per_capita
@@ -379,7 +450,7 @@ ggsave("plots/index_per_capita.png", plot = index_per_capita, width = 10, height
 ```
 
 ```{r}
-write.csv(eaicc, "EAICC.csv")
+write.csv(enfcc, "enfcc.csv")
 ```
 
 - Normieren auf Emissionen auf Personen und Senken auf Fläche
