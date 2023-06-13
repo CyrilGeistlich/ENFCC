@@ -38,7 +38,26 @@ emissions_raw = readxl::read_excel(emissions_file)
 population_raw = readxl::read_excel(population_file)
 iso_raw = readxl::read_excel(iso_file) %>% unique()
 projection_raw = readxl::read_excel((projection_file))
+GHG_1990 <- read_delim("data/AIR_GHG_1990.csv", ";")
+```
+```{r GHG 1990}
+GHG_1990_capita <- GHG_1990 |>
+  filter(Year == "1990") |>
+  filter(Variable == "Total GHG excl. LULUCF per capita") |>
+  filter(POL == "GHG") |>
+  rename(country = "Country",
+         emissions_1990 = "Value")
 
+GHG_1990_capita <- GHG_1990_capita[,-c(1,3:9,11:14,16,17)]
+
+GHG_1990 <- GHG_1990 |>
+  filter(Year == "1990") |>
+  filter(Variable == "Total  emissions excluding LULUCF") |>
+  filter(POL == "GHG") |>
+  rename(country = "Country",
+         emissions_1990 = "Value")
+
+GHG_1990 <- GHG_1990[,-c(1,3:9,11:14,16,17)]
 ```
 
 
@@ -196,6 +215,18 @@ all_data <- drop_na(all_data)
 ```
 
 ```{r}
+
+# Normalization function 
+fun_range <- function(x) {
+  (x - min(x)) / (max(x) - min(x))
+}
+
+# For mitigation (reverse normalization to assign most negative values to 1 = highest mitigation efforts)
+fun_range_reverse <- function(x) {
+  1 - (x - min(x)) / (max(x) - min(x))
+}
+
+
 # Calculating scores for impact and mitigation component/dimension (> for later mapping)
 # Impact only described through weighted GHG emissions 
 # Mitigation: total mitigation is describes through LULUCFs & PAMs 2030 (minus the emissions through LULUCFs)
@@ -215,15 +246,6 @@ enfcc_per_capita <- enfcc_per_capita %>%
   mutate(tot_mit_pop = tot_mit / pop) %>%
   mutate(tot_mit_reverse_pop = tot_mit_pop * -1)
 
-# Normalization function 
-fun_range <- function(x) {
-  (x - min(x)) / (max(x) - min(x))
-}
-
-# For mitigation (reverse normalization to assign most negative values to 1 = highest mitigation efforts)
-fun_range_reverse <- function(x) {
-  1 - (x - min(x)) / (max(x) - min(x))
-}
 
 # Use normalization function to scale values between 0 and 1
 enfcc$impact <- fun_range(x = enfcc$weighted_projected_emissions)
@@ -232,6 +254,20 @@ enfcc$enfcc <- fun_range_reverse(x = enfcc$netto)
 
 enfcc_per_capita$enfcc_pop <- fun_range_reverse(x = enfcc_per_capita$netto_pop)
 ```
+
+```{r emissions 1990}
+enfcc <- left_join(enfcc,GHG_1990, by = "country")
+enfcc_per_capita <- left_join(enfcc_per_capita,GHG_1990_capita, by = "country")
+
+
+enfcc <- drop_na(enfcc)
+enfcc_per_capita <- drop_na(enfcc_per_capita)
+
+baseline_1990 <- sum(enfcc$emissions_1990) * 0.55 / 1000 / 27 #convert to kt of CO2 eq.
+baseline_1990_capita <- (sum(enfcc_per_capita$emissions_1990)*0.55/1000/27) #Convert to t per capita
+```
+
+
 
 ```{r clean env}
 # Keep working env clean
@@ -251,9 +287,11 @@ netline <- ggplot(enfcc) +
   ylab("Climate change Mitigation Potential in 2030 \n[kT CO2 eq]") +
   ggtitle("European Net Footprint for Climate Change (ENFCC) per Country") +
   geom_abline(slope = 1, linetype = "dashed") +
-  geom_text(x = 80000, y = 70000, label = "Net-Zero-Goal 2030", hjust = 0, vjust = 0, size = 4, angle = 0) +
+  geom_abline(slope = 1, intercept = -baseline_1990, linetype = "dashed") +
+  geom_text(x = 32000, y = 40000, label = "Net-Zero-Goal 2050", hjust = 0, vjust = 0, size = 4, angle = 71) +
+  geom_text(x = 128000, y = 40000, label = "55%-Goal 2030", hjust = 0, vjust = 0, size = 4, angle = 71) +
   geom_text_repel(aes(weighted_projected_emissions, tot_mit_reverse, label = country), size = 2, force = 1, max.overlaps = 50) +
-  scale_color_gradientn(colors = custom_colors, values = c(0, 1, 2), guide = "none") +
+  scale_color_gradientn(colors = custom_colors, values = c(0, 0.65, 1.2), guide = "none") +
   theme(
     axis.text.x = element_text(angle = 0, vjust = 0.75, ),
     axis.title = element_text(size = 12),
@@ -269,13 +307,15 @@ netline <- netline + scale_x_continuous(labels = label_number()) + scale_y_conti
 netline_per_capita <- ggplot(enfcc_per_capita) +
   geom_point(aes(weighted_projected_emissions_pop * 1000, tot_mit_reverse_pop * 1000, color = enfcc_pop)) +
   xlab("Climate Change Impact per Capita \n projected GHG emissions for 2030 [T CO2 eq]") +
-  ylab("Climate change Mitigation Potential \n per capita in 2030 [T CO2 eq]") +
+  ylab("Climate change Mitigation Potential \n per capita in 2050 [T CO2 eq]") +
   ggtitle("European Net Footprint for Climate Change (ENFCC) \nper Capita and Country") +
   geom_abline(slope = 1, linetype = "dashed") +
-  geom_text(x = 7, y = 5.5, label = "Net-Zero-Goal 2030", hjust = 0, vjust = 0, size = 4, angle = 18) +
+  geom_abline(slope = 1, intercept = -baseline_1990_capita, linetype = "dashed") +
+  geom_text(x = 5, y = 5.5, label = "Net-Zero-Goal 2050", hjust = 0, vjust = 0, size = 4, angle = 18) +
+  geom_text(x = 9, y = 3.1, label = "55%-Goal 2030", hjust = 0, vjust = 0, size = 4, angle = 18) +
   geom_text_repel(aes(weighted_projected_emissions_pop * 1000, tot_mit_reverse_pop * 1000, label = country), 
                   size = 2, force = 1, max.overlaps = 50) +
-  scale_color_gradientn(colors = custom_colors, values = c(0, 1, 2), guide = "none") +
+  scale_color_gradientn(colors = custom_colors, values = c(0, 0.65, 1.2), guide = "none") +
   theme(
     axis.text.x = element_text(angle = 0, vjust = 1, hjust = 1),
     axis.title = element_text(size = 12),
@@ -302,9 +342,11 @@ netline_zoom <- ggplot(enfcc) +
   ylab("Climate change Mitigation Potential in 2030 \n[kT CO2 eq]") +
   ggtitle("European Net Footprint for Climate Change (ENFCC) per Country") +
   geom_abline(slope = 1, linetype = "dashed") +
-  geom_text(x = 100000, y = 85000, label = "Net-Zero-Goal 2030", hjust = -0.1, vjust = -0.1, size = 4, angle = 37) +
+  geom_abline(slope = 1, intercept = -baseline_1990, linetype = "dashed") +
+  geom_text(x = 80000, y = 82000, label = "Net-Zero-Goal 2050", hjust = -0.1, vjust = -0.1, size = 4, angle = 37) +
+  geom_text(x = 120000, y = 30000, label = "55%-Goal 2030", hjust = 0, vjust = 0, size = 4, angle = 37) +
   geom_text_repel(aes(weighted_projected_emissions, tot_mit_reverse, label = country), size = 2, force = 1, max.overlaps = 50) +
-  scale_color_gradientn(colors = custom_colors, values = c(0, 1, 2), guide = "none") +
+  scale_color_gradientn(colors = custom_colors, values = c(0, 0.65, 1.2), guide = "none") +
   theme(
     axis.text.x = element_text(angle = 0, vjust = 0.75),
     axis.title = element_text(size = 12),
@@ -325,9 +367,10 @@ netline_per_capita_zoom <- ggplot(enfcc_per_capita) +
   ylab("Climate change Mitigation Potential \n per capita in 2030 [T CO2 eq]") +
   ggtitle("European Net Footprint for Climate Change (ENFCC) \nper Capita and Country") +
   geom_abline(slope = 1, linetype = "dashed") +
+  geom_abline(slope = 1, intercept = -baseline_1990_capita, linetype = "dashed") +
   geom_text_repel(aes(weighted_projected_emissions_pop * 1000, tot_mit_reverse_pop  *1000, label = country), 
                   size = 2, force = 1, max.overlaps = 50) +
-  scale_color_gradientn(colors = custom_colors, values = c(0, 1, 2), guide = "none") +
+  scale_color_gradientn(colors = custom_colors, values = c(0, 0.65, 1.2), guide = "none") +
   theme(
     axis.text.x = element_text(angle = 0, vjust = 0, hjust = 0),
     axis.title = element_text(size = 12),
@@ -339,7 +382,8 @@ netline_per_capita_zoom <- ggplot(enfcc_per_capita) +
   scale_x_continuous(labels = label_number()) +
   scale_y_continuous(labels = label_number()) +
   coord_cartesian(xlim = c(2, 12), ylim = c(-5, 10)) +
-  geom_text(x = 7.5, y = 6.5, label = "Net-Zero-Goal 2030", hjust = 0, vjust = 0, size = 4, angle = 19)
+  geom_text(x = 7.5, y = 6.5, label = "Net-Zero-Goal 2050", hjust = 0, vjust = 0, size = 4, angle = 19) +
+  geom_text(x = 9, y = 3.1, label = "55%-Goal 2030", hjust = 0, vjust = 0, size = 4, angle = 19) 
 
 netline_zoom
 netline_per_capita_zoom
@@ -359,44 +403,59 @@ ggsave("plots/netline_zoom.png", plot = netline_zoom, width = 10, height = 6, dp
 # y = x
 
 # Function to calculate the minimum distance
-min_distance_to_line <- function(x, y) {
-  distance <- (y - x)/ sqrt(2)  # Perpendicular distance formula
+min_distance_to_line <- function(x, y, intercept) {
+  distance <- (y - x - intercept) / sqrt(2)  # Perpendicular distance formula
   return(distance)
 }
 
-#This function is used when score values are positive and negative
+# This function is used when score values are positive and negative
 # When comparing multiple years replace max(score) with absolute value
-# scale_index <- function(score) {
-#   zero <- ((0 + abs(min(score)))/max(score)) #defines net zero boundary
+scale_index <- function(score, baseline) {
+  
+  baseline <- baseline + min(score) # Move baseline
+  score <- score + abs(min(score)) #So everything is positive, lowest score = 0
+  
+  baseline <- 1 + baseline/max(score) #scale baseline,
+  score <- score/max(score) #scale everything into [0,1]
+ 
+  score <- round(100 * (score - baseline),1) #Set 0 correctly, round, scale to 100, -100
+  return(score)
+}
+
+# This function is used when score values are positive and negative
+# When comparing multiple years replace max(score) with absolute value
+# scale_index <- function(score, baseline) {
+#   zero <- ((baseline + abs(min(score)))/max(score)) #defines net zero boundary
 #   score <- ((score + abs(min(score)))/max(score))
-#   
+# 
 #   zero <- zero/max(score)
 #   score <- round((score/max(score) - zero) * 100,1)
 #   return(score)
 # }
 
-#This function is when all score values are negative
-scale_index <- function(score) {
-  zero <- ((0 + max(score))/max(score)) #defines net zero boundary
-  score <- ((score + max(score))/max(score))
 
-  zero <- zero/max(score)
-  print(zero)
-  score <- round(-(score/max(score)-zero) * 100,1)
-  return(score)
-}
+# #This function is when all score values are negative
+# scale_index <- function(score) {
+#   zero <- ((0 + max(score))/max(score)) #defines net zero boundary
+#   score <- ((score + max(score))/max(score))
+# 
+#   zero <- zero/max(score)
+#   print(zero)
+#   score <- round(-(score/max(score)-zero) * 100,1)
+#   return(score)
+# }
 
 
 # Calculate the minimum distance for each point
 enfcc <- enfcc |>
-  mutate(score = min_distance_to_line(weighted_projected_emissions, tot_mit_reverse))
+  mutate(score = min_distance_to_line(weighted_projected_emissions, tot_mit_reverse, -baseline_1990))
 
 enfcc_per_capita  <- enfcc_per_capita |>
-  mutate(score = min_distance_to_line(enfcc_per_capita$weighted_projected_emissions_pop, enfcc_per_capita$tot_mit_reverse_pop))
+  mutate(score = min_distance_to_line(enfcc_per_capita$weighted_projected_emissions_pop, enfcc_per_capita$tot_mit_reverse_pop, -baseline_1990_capita))
 
 enfcc_index <- data.frame(country = enfcc$country, score_per_capita = enfcc_per_capita$score,score = enfcc$score) 
-enfcc_index$score <- scale_index(enfcc_index$score)
-enfcc_index$score_per_capita <- scale_index(enfcc_index$score_per_capita)
+enfcc_index$score <- scale_index(enfcc_index$score,baseline_1990)
+enfcc_index$score_per_capita <- scale_index(enfcc_index$score_per_capita,baseline_1990_capita)
 
 ```
 
