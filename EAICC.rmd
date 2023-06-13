@@ -400,7 +400,7 @@ ggsave("plots/netline_zoom.png", plot = netline_zoom, width = 10, height = 6, dp
 # Positive values lie above the line an negative values below. There is no min or max value, however a higher index equals a better perfomance. 
 
 # X: weighted_projected_emissions Y: tot_mit_reverse,
-# y = x
+# slope: y = x
 
 # Function to calculate the minimum distance
 min_distance_to_line <- function(x, y, intercept) {
@@ -408,71 +408,63 @@ min_distance_to_line <- function(x, y, intercept) {
   return(distance)
 }
 
-# This function is used when score values are positive and negative
-# When comparing multiple years replace max(score) with absolute value
-scale_index <- function(score, baseline) {
-  
-  baseline <- baseline + min(score) # Move baseline
-  score <- score + abs(min(score)) #So everything is positive, lowest score = 0
-  
-  baseline <- 1 + baseline/max(score) #scale baseline,
-  score <- score/max(score) #scale everything into [0,1]
- 
-  score <- round(100 * (score - baseline),1) #Set 0 correctly, round, scale to 100, -100
-  return(score)
+distance_to_net_zero <- function(x, y) {
+  distance <- (y - x) / sqrt(2)  # Perpendicular distance formula
+  return(distance)
 }
 
 # This function is used when score values are positive and negative
 # When comparing multiple years replace max(score) with absolute value
-# scale_index <- function(score, baseline) {
-#   zero <- ((baseline + abs(min(score)))/max(score)) #defines net zero boundary
-#   score <- ((score + abs(min(score)))/max(score))
-# 
-#   zero <- zero/max(score)
-#   score <- round((score/max(score) - zero) * 100,1)
-#   return(score)
-# }
+scale_index <- function(score) {
+  zero <- abs(min(score))
+  score <- score + abs(min(score)) #Everything +
+  
+  zero <- zero/max(score)
+  score <- score/max(score) #[0,1]
+  score <- round(100 * (score - zero),1)
+  return(score)
+}
 
-
-# #This function is when all score values are negative
-# scale_index <- function(score) {
-#   zero <- ((0 + max(score))/max(score)) #defines net zero boundary
-#   score <- ((score + max(score))/max(score))
-# 
-#   zero <- zero/max(score)
-#   print(zero)
-#   score <- round(-(score/max(score)-zero) * 100,1)
-#   return(score)
-# }
 
 
 # Calculate the minimum distance for each point
 enfcc <- enfcc |>
-  mutate(score = min_distance_to_line(weighted_projected_emissions, tot_mit_reverse, -baseline_1990))
+  mutate(score = min_distance_to_line(weighted_projected_emissions, tot_mit_reverse, -baseline_1990)) |>
+  mutate(score_net_null = distance_to_net_zero(weighted_projected_emissions, tot_mit_reverse))
 
 enfcc_per_capita  <- enfcc_per_capita |>
-  mutate(score = min_distance_to_line(enfcc_per_capita$weighted_projected_emissions_pop, enfcc_per_capita$tot_mit_reverse_pop, -baseline_1990_capita))
+  mutate(score = min_distance_to_line(weighted_projected_emissions_pop * 1000, tot_mit_reverse_pop  * 1000, -baseline_1990_capita)) |>
+  mutate(score_net_null = distance_to_net_zero(weighted_projected_emissions_pop, tot_mit_reverse_pop))
 
-enfcc_index <- data.frame(country = enfcc$country, score_per_capita = enfcc_per_capita$score,score = enfcc$score) 
-enfcc_index$score <- scale_index(enfcc_index$score,baseline_1990)
-enfcc_index$score_per_capita <- scale_index(enfcc_index$score_per_capita,baseline_1990_capita)
+enfcc_index <- data.frame(country = enfcc$country, score = enfcc$score ,score_per_capita = enfcc_per_capita$score) 
+
+enfcc_index$score <- scale_index(enfcc_index$score)
+enfcc_index$score_per_capita <- scale_index(enfcc_index$score_per_capita)
 
 ```
 
 ```{r classify index score}
+# Define the classification labels
+classification_labels <- c("Atrocious", "Terrible", "Insufficient", "Slightly Insufficient", "Sufficient" ,"Good", "Very Good", "Excellent")
+
+# Define the corresponding colors for each classification
+classification_colors <- c("#800000", "#B30000", "#E60000", "#FF9999", "#ADFF2F", "#32CD32", "#2E8B57", "#006400")
 
 
 enfcc_index <- enfcc_index |>
   mutate(classification = cut(score, breaks = seq(-100, 100, by = 25),
-                             labels = c("Atrocious", "Terrible", "Insufficient", "Slightly Insufficient", "OK", "Good", "Very Good", "Excellent"),
-                             include.lowest = TRUE, right = FALSE))
-
+                             labels = classification_labels,
+                             include.lowest = TRUE, right = FALSE)) |>
+  mutate(color = factor(classification, levels = classification_labels,
+                        labels = classification_colors))
 
 
 enfcc_index <- enfcc_index |>
   mutate(classification_per_capita = cut(score_per_capita, breaks = seq(-100, 100, by = 25),
-                             labels = c("Atrocious", "Terrible", "Very Bad", "Bad", "OK", "Good", "Very Good", "Excellent"),
-                             include.lowest = TRUE, right = FALSE))
+                             labels = classification_labels,
+                             include.lowest = TRUE, right = FALSE)) |>
+  mutate(color_per_capita = factor(classification_per_capita, levels = classification_labels,
+                        labels = classification_colors))
 ```
 
 
@@ -483,13 +475,10 @@ enfcc_index <- enfcc_index |>
   arrange(desc(score)) |>
   mutate(country = factor(country, levels = unique(country)))
 
-# Define shades of red
-color_palette <- c("#800000", "#B30000", "#E60000", "#FF9999")
 
-# Create the plot
-index <- ggplot(enfcc_index, aes(country, score, fill = classification)) +
+index <- ggplot(enfcc_index, aes(country, score, fill = color)) +
   geom_bar(stat = "identity", width = 0.8) +
-  scale_fill_manual(values = color_palette) +
+  scale_fill_identity() +  
   labs(x = "Country", y = "Score") +
   theme(axis.text.x = element_text(angle = 45, vjust = 0.75, hjust = 1),
         axis.title = element_text(size = 12, face = "bold"),
@@ -499,14 +488,15 @@ index <- ggplot(enfcc_index, aes(country, score, fill = classification)) +
   scale_x_discrete(limits = rev(levels(enfcc_index$country))) +
   ggtitle("European Net Footprint for Climate Change (ENFCC) \nScore per Country")
 
+
 #Arrange Score Ascending
 enfcc_index <- enfcc_index %>%
   arrange(desc(score_per_capita)) %>%
   mutate(country = factor(country, levels = unique(country)))
 
-index_per_capita <- ggplot(enfcc_index, aes(country, score_per_capita, fill = classification_per_capita)) +
+index_per_capita <- ggplot(enfcc_index, aes(country, score_per_capita, fill = color_per_capita)) +
   geom_bar(stat = "identity", width = 0.8) +
-  scale_fill_manual(values = color_palette) +
+  scale_fill_identity() + 
   labs(x = "Country", y = "Score") +
   theme(axis.text.x = element_text(angle = 45, vjust = 0.75, hjust = 1),
         axis.title = element_text(size = 12, face = "bold"),
@@ -515,7 +505,11 @@ index_per_capita <- ggplot(enfcc_index, aes(country, score_per_capita, fill = cl
         panel.grid.minor = element_blank(),
         panel.background = element_blank()) +
   scale_x_discrete(limits = rev(levels(enfcc_index$country))) +
-  ggtitle("European Net Footprint for Climate Change (ENFCC) \nScore per Country and Capita")
+  ggtitle("European Net Footprint for Climate Change (ENFCC) \nScore per Country and Capita") +
+  guides(fill = guide_legend(title = "Classification"))  # Set the legend title
+
+
+
 
 index
 index_per_capita
