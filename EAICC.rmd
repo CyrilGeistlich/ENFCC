@@ -190,7 +190,7 @@ all_data <- per_country_pams_2030 %>%
 # Calculate netto for each country (weighted impact + mitigation (mitigation is negative): 
 # net = (0.6*proj.emission + 0.4*LULUCF sources) - (0.4*LULUCF sinks + 0.4*implemented PAMs + 0.1*adopted PAMs + 0.1*planned PAMs)
 all_data <- all_data %>% 
-  mutate(netto = rowSums(.[c(2,6,10)],na.rm=TRUE))
+  mutate(netto = rowSums(.[c(6,10)],na.rm=TRUE)) # remove PAM
 ```
 
 Drop rows with NA values: Unfortunately, Norway has no WAM predictions!!!
@@ -230,7 +230,7 @@ fun_range_reverse <- function(x) {
 # Calculating scores for impact and mitigation component/dimension (> for later mapping)
 # Impact only described through weighted GHG emissions 
 # Mitigation: total mitigation is describes through LULUCFs & PAMs 2030 (minus the emissions through LULUCFs)
-all_data <- all_data %>% mutate(tot_mit = rowSums(.[c(2,6)],na.rm=TRUE))
+all_data <- all_data %>% mutate(tot_mit = rowSums(.[c(6)],na.rm=TRUE)) # remove PAM
 
 # Creating new df with relevant columns
 enfcc <- all_data %>% select(country, weighted_projected_emissions, tot_mit, pop)
