@@ -288,7 +288,6 @@ netline <- ggplot(enfcc) +
   ggtitle("European Net Footprint for Climate Change (ENFCC) per Country") +
   geom_abline(slope = 1, linetype = "dashed") +
   geom_abline(slope = 1, intercept = -baseline_1990, linetype = "dashed") +
-  geom_text(x = 75000, y = 90000, label = "Net-Zero-Goal 2050", hjust = 0, vjust = 0, size = 4, angle = 55) +
   geom_text(x = 172000, y = 90000, label = "55%-Goal 2030", hjust = 0, vjust = 0, size = 4, angle = 55) +
   geom_text_repel(aes(weighted_projected_emissions, tot_mit_reverse, label = country), size = 2, force = 1, max.overlaps = 50) +
   scale_color_gradientn(colors = custom_colors, values = c(0, 0.65, 1.2), guide = "none") +
@@ -312,7 +311,6 @@ netline_per_capita <- ggplot(enfcc_per_capita) +
   ggtitle("European Net Footprint for Climate Change (ENFCC) \nper Capita and Country") +
   geom_abline(slope = 1, linetype = "dashed") +
   geom_abline(slope = 1, intercept = -baseline_1990_capita, linetype = "dashed") +
-  geom_text(x = 5, y = 5.5, label = "Net-Zero-Goal 2050", hjust = 0, vjust = 0, size = 4, angle = 18) +
   geom_text(x = 9, y = 3.1, label = "55%-Goal 2030", hjust = 0, vjust = 0, size = 4, angle = 18) +
   geom_text_repel(aes(weighted_projected_emissions_pop * 1000, tot_mit_reverse_pop * 1000, label = country), 
                   size = 2, force = 1, max.overlaps = 50) +
@@ -344,7 +342,6 @@ netline_zoom <- ggplot(enfcc) +
   ggtitle("European Net Footprint for Climate Change (ENFCC) per Country") +
   geom_abline(slope = 1, linetype = "dashed") +
   geom_abline(slope = 1, intercept = -baseline_1990, linetype = "dashed") +
-  geom_text(x = 80000, y = 82000, label = "Net-Zero-Goal 2050", hjust = -0.1, vjust = -0.1, size = 4, angle = 37) +
   geom_text(x = 120000, y = 30000, label = "55%-Goal 2030", hjust = 0, vjust = 0, size = 4, angle = 37) +
   geom_text_repel(aes(weighted_projected_emissions, tot_mit_reverse, label = country), size = 2, force = 1, max.overlaps = 50) +
   scale_color_gradientn(colors = custom_colors, values = c(0, 0.65, 1.2), guide = "none") +
@@ -383,7 +380,6 @@ netline_per_capita_zoom <- ggplot(enfcc_per_capita) +
   scale_x_continuous(labels = label_number()) +
   scale_y_continuous(labels = label_number()) +
   coord_cartesian(xlim = c(2, 12), ylim = c(-5, 10)) +
-  geom_text(x = 7.5, y = 6.5, label = "Net-Zero-Goal 2050", hjust = 0, vjust = 0, size = 4, angle = 19) +
   geom_text(x = 9, y = 3.1, label = "55%-Goal 2030", hjust = 0, vjust = 0, size = 4, angle = 19) 
 
 netline_zoom
