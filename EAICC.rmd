@@ -432,19 +432,20 @@ enfcc = merge(enfcc, enfcc_index, by="country")
 enfcc_per_capita = merge(enfcc_per_capita, enfcc_index, by="country")
 ```
 
-```{r Mapping}
+```{r Plotting 1}
 #plot th normal plot
 netline <- ggplot(enfcc, aes(x = weighted_projected_emissions, y = tot_mit_reverse, color = classification)) +
   geom_point() +
+  geom_point(shape = 1,colour = "black", stroke = 0.2) +
   xlab("Climate Change Impact: \n Projected GHG emissions for 2030 [kT CO2 eq]") +
   ylab("Climate change Mitigation Potential in 2030 \n[kT CO2 eq]") +
   ggtitle("European Net Footprint for Climate Change (ENFCC) per Country") +
   scale_color_manual(values = custom_colors) +
   geom_abline(slope = 1, linetype = "dashed") +
   geom_abline(slope = 1, intercept = -baseline_1990, linetype = "dashed") +
-  geom_text(x = 75000, y = 90000, label = "Net-Zero-Goal 2050", hjust = 0, vjust = 0, size = 4, angle = 61, color = "black") +
-  geom_text(x = 172000, y = 90000, label = "55%-Goal 2030", hjust = 0, vjust = 0, size = 4, angle = 61, color = "black") +
-  geom_text_repel(aes(weighted_projected_emissions, tot_mit_reverse, label = country), size = 2, force = 1, max.overlaps = 50, color = "black") +
+  geom_text(x = 75000, y = 90000, label = "Net-Zero-Goal 2050", hjust = 0, vjust = 0, size = 3, angle = 61, color = "black") +
+  geom_text(x = 172000, y = 90000, label = "55%-Goal 2030", hjust = 0, vjust = 0, size = 3, angle = 61, color = "black") +
+  geom_text_repel(aes(weighted_projected_emissions, tot_mit_reverse, label = country), size = 2, force = 1, max.overlaps = 50, color = "black", segment.size = 0.1) +
   theme(
     axis.text.x = element_text(angle = 0, vjust = 0.75, ),
     axis.title = element_text(size = 12),
@@ -460,16 +461,17 @@ netline <- netline + scale_x_continuous(labels = label_number()) + scale_y_conti
 
 netline_per_capita <- ggplot(enfcc_per_capita, aes(x = weighted_projected_emissions_pop * 1000, y = tot_mit_reverse_pop * 1000, color = classification_per_capita)) +
   geom_point() +
+  geom_point(shape = 1,colour = "black", stroke = 0.2) +
   xlab("Climate Change Impact per Capita \n projected GHG emissions for 2030 [T CO2 eq]") +
   ylab("Climate change Mitigation Potential \n per capita in 2050 [T CO2 eq]") +
   ggtitle("European Net Footprint for Climate Change (ENFCC) \nper Capita and Country") +
   scale_color_manual(values = custom_colors) +
   geom_abline(slope = 1, linetype = "dashed") +
   geom_abline(slope = 1, intercept = -baseline_1990_capita, linetype = "dashed") +
-  geom_text(x = 5, y = 5.5, label = "Net-Zero-Goal 2050", hjust = 0, vjust = 0, size = 4, angle = 27, color = "black") +
-  geom_text(x = 9, y = 3.1, label = "55%-Goal 2030", hjust = 0, vjust = 0, size = 4, angle = 27, color = "black") +
+  geom_text(x = 5, y = 5.5, label = "Net-Zero-Goal 2050", hjust = 0, vjust = 0, size = 3, angle = 27, color = "black") +
+  geom_text(x = 9, y = 3.1, label = "55%-Goal 2030", hjust = 0, vjust = 0, size = 3, angle = 27, color = "black") +
   geom_text_repel(aes(weighted_projected_emissions_pop * 1000, tot_mit_reverse_pop * 1000, label = country), 
-                  size = 2, force = 1, max.overlaps = 50, color = "black") +
+                  size = 2, force = 1, max.overlaps = 50, color = "black", segment.size = 0.1) +
   theme(
     axis.text.x = element_text(angle = 0, vjust = 1, hjust = 1),
     axis.title = element_text(size = 12),
@@ -487,18 +489,19 @@ ggsave("plots/netline.png", plot = netline, width = 10, height = 6, dpi = 300)
 ggsave("plots/netline_per_capita.png", plot = netline_per_capita, width = 10, height = 6, dpi = 300)
 ```
 
-```{r}
+```{r Plotting 2}
 netline_zoom <- ggplot(enfcc, aes(weighted_projected_emissions, tot_mit_reverse, color = classification)) +
   geom_point() +
+  geom_point(shape = 1,colour = "black", stroke = 0.2) +
   xlab("Climate Change Impact: \n Projected GHG emissions for 2030 [kT CO2 eq]") +
   ylab("Climate change Mitigation Potential in 2030 \n[kT CO2 eq]") +
   ggtitle("European Net Footprint for Climate Change (ENFCC) per Country") +
   scale_color_manual(values = custom_colors) +
   geom_abline(slope = 1, linetype = "dashed") +
   geom_abline(slope = 1, intercept = -baseline_1990, linetype = "dashed") +
-  geom_text(x = 80000, y = 82000, label = "Net-Zero-Goal 2050", hjust = -0.1, vjust = -0.1, size = 4, angle = 45, color = "black") +
-  geom_text(x = 120000, y = 30000, label = "55%-Goal 2030", hjust = 0, vjust = 0, size = 4, angle = 45, color = "black") +
-  geom_text_repel(aes(weighted_projected_emissions, tot_mit_reverse, label = country), size = 2, force = 1, max.overlaps = 50, color = "black") +
+  geom_text(x = 80000, y = 82000, label = "Net-Zero-Goal 2050", hjust = -0.1, vjust = -0.1, size = 3, angle = 45, color = "black") +
+  geom_text(x = 120000, y = 30000, label = "55%-Goal 2030", hjust = 0, vjust = 0, size = 3, angle = 45, color = "black") +
+  geom_text_repel(aes(weighted_projected_emissions, tot_mit_reverse, label = country), size = 2, force = 1, max.overlaps = 50, color = "black", segment.size = 0.1) +
   theme(
     axis.text.x = element_text(angle = 0, vjust = 0.75),
     axis.title = element_text(size = 12),
@@ -515,6 +518,7 @@ netline_zoom <- ggplot(enfcc, aes(weighted_projected_emissions, tot_mit_reverse,
 
 netline_per_capita_zoom <- ggplot(enfcc_per_capita, aes(weighted_projected_emissions_pop * 1000, tot_mit_reverse_pop * 1000, color = classification_per_capita)) +
   geom_point() +
+  geom_point(shape = 1,colour = "black", stroke = 0.2)  +
   xlab("Climate Change Impact per Capita \n projected GHG emissions for 2030 [T CO2 eq]") +
   ylab("Climate change Mitigation Potential \n per capita in 2030 [T CO2 eq]") +
   ggtitle("European Net Footprint for Climate Change (ENFCC) \nper Capita and Country") +
@@ -522,7 +526,7 @@ netline_per_capita_zoom <- ggplot(enfcc_per_capita, aes(weighted_projected_emiss
   geom_abline(slope = 1, linetype = "dashed") +
   geom_abline(slope = 1, intercept = -baseline_1990_capita, linetype = "dashed") +
   geom_text_repel(aes(weighted_projected_emissions_pop * 1000, tot_mit_reverse_pop  *1000, label = country), 
-                  size = 2, force = 1, max.overlaps = 50, color = "black") +
+                  size = 2, force = 1, max.overlaps = 50, color = "black", segment.size = 0.1) +
   theme(
     axis.text.x = element_text(angle = 0, vjust = 0, hjust = 0),
     axis.title = element_text(size = 12),
@@ -534,8 +538,8 @@ netline_per_capita_zoom <- ggplot(enfcc_per_capita, aes(weighted_projected_emiss
   scale_x_continuous(labels = label_number()) +
   scale_y_continuous(labels = label_number()) +
   coord_cartesian(xlim = c(2, 12), ylim = c(-5, 10)) +
-  geom_text(x = 7.5, y = 6.5, label = "Net-Zero-Goal 2050", hjust = 0, vjust = 0, size = 4, angle = 26, color = "black") +
-  geom_text(x = 9, y = 3.1, label = "55%-Goal 2030", hjust = 0, vjust = 0, size = 4, angle = 26, color = "black") 
+  geom_text(x = 7.5, y = 6.5, label = "Net-Zero-Goal 2050", hjust = 0, vjust = 0, size = 3, angle = 26, color = "black") +
+  geom_text(x = 9, y = 3.1, label = "55%-Goal 2030", hjust = 0, vjust = 0, size = 3, angle = 26, color = "black") 
 
 netline_zoom
 netline_per_capita_zoom
@@ -551,8 +555,5 @@ write.csv(enfcc_per_capita, "enfcc_per_capita.csv")
 write.csv(enfcc_index, "enfcc_index.csv")
 ```
 
-- Normieren auf Emissionen auf Personen und Senken auf Fläche
-- Ein absoluter Plot
-- Gewichtung anpassen
-
-- klassifizieren von den Index-Werten 
+- schwarzer Rand
+- Linien weniger dick
