@@ -367,7 +367,7 @@ netline_per_capita_zoom <- ggplot(enfcc_per_capita) +
   xlab("Climate Change Impact per Capita \n projected GHG emissions for 2030 [T CO2 eq]") +
   ylab("Climate change Mitigation Potential \n per capita in 2030 [T CO2 eq]") +
   ggtitle("European Net Footprint for Climate Change (ENFCC) \nper Capita and Country") +
-  geom_abline(slope = 1, linetype = "dashed") +
+  #geom_abline(slope = 1, linetype = "dashed") +
   geom_abline(slope = 1, intercept = -baseline_1990_capita, linetype = "dashed") +
   geom_text_repel(aes(weighted_projected_emissions_pop * 1000, tot_mit_reverse_pop  *1000, label = country), 
                   size = 2, force = 1, max.overlaps = 50) +
@@ -490,14 +490,12 @@ index <- ggplot(enfcc_index, aes(country, score, fill = color)) +
   scale_x_discrete(limits = rev(levels(enfcc_index$country))) +
   scale_y_continuous(breaks = seq(-100, 75, by = 25)) +
   coord_cartesian(ylim = c(-100, 75)) +
-  geom_hline(yintercept = 50, linetype = "dashed", color = "black") +
-  annotate("text", x = Inf, y = 50, label = "Net-Zero-Goal 2050", hjust = 1, vjust = -0.5) +
+  #geom_hline(yintercept = 50, linetype = "dashed", color = "black") +
+  #annotate("text", x = Inf, y = 50, label = "Net-Zero-Goal 2050", hjust = 1, vjust = -0.5) +
   ggtitle("European Net Footprint for Climate Change (ENFCC) \nScore per Country") + 
   guides(fill = guide_legend(title = "Classification"), colour = classification_labels) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
   annotate("text", x = Inf, y = 0, label = "55%-Goal 2030", hjust = 1, vjust = 1.5)
-
-
 
 
 
@@ -525,8 +523,8 @@ index_per_capita <- ggplot(enfcc_index, aes(country, score_per_capita, fill = co
   guides(fill = guide_legend(title = "Classification"), colour = classification_labels) + # Set the legend title
   scale_y_continuous(breaks = seq(-100, 75, by = 25)) +
   coord_cartesian(ylim = c(-100, 75)) +
-  geom_hline(yintercept = 50, linetype = "dashed", color = "black") +
-  annotate("text", x = Inf, y = 50, label = "Net-Zero-Goal 2050", hjust = 1, vjust = -0.5) +
+  #geom_hline(yintercept = 50, linetype = "dashed", color = "black") +
+  #annotate("text", x = Inf, y = 50, label = "Net-Zero-Goal 2050", hjust = 1, vjust = -0.5) +
   geom_hline(yintercept = 0, linetype = "dashed", color = "black") +
   annotate("text", x = Inf, y = 0, label = "55%-Goal 2030", hjust = 1, vjust = 1.5)
 
