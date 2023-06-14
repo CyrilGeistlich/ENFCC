@@ -175,7 +175,7 @@ emission <- emissions_raw %>%
 
 emission$emissions <- emission$emissions *1000 # [kt CO2eq] K kt -> kt CO2 eq
 #emission <- emission %>% mutate(weighted_emissions=emissions*.6) # [kt CO2eq]
-emission <- emission %>% mutate(weighted_projected_emissions=projection*.6)
+emission <- emission %>% mutate(weighted_projected_emissions=projection*1.33*.6) # multiply *1.33 to account for the importet emissions
 #emission <- emission %>% mutate(weighted_emissions_pop=emissions/pop*1000*.6) # [kt CO2eq per capita]
 emission <- emission %>% mutate(weighted_projected_emission_pop=projection/pop*.6) # TODO(?) [kt CO2eq per capita] 
 ```
@@ -248,7 +248,7 @@ enfcc_per_capita <- enfcc_per_capita %>%
 
 
 # Use normalization function to scale values between 0 and 1
-enfcc$impact <- fun_range(x = enfcc$weighted_projected_emissions)
+enfcc$impact <- fun_range(x = enfcc$weighted_projected_emissions) 
 enfcc$mitigation <- fun_range_reverse(x = enfcc$tot_mit)
 enfcc$enfcc <- fun_range_reverse(x = enfcc$netto)
 
@@ -449,7 +449,7 @@ enfcc_index$score_per_capita <- scale_index(enfcc_index$score_per_capita)
 classification_labels <- c("Atrocious", "Terrible", "Insufficient", "Slightly Insufficient", "Sufficient" ,"Good", "Very Good", "Excellent")
 
 # Define the corresponding colors for each classification
-classification_colors <- c("#800000", "#B30000", "#E60000", "#FF9999", "#ADFF2F", "#32CD32", "#2E8B57", "#006400")
+classification_colors <- c("#d73027", "#f46d43", "#fdae61", "#fee090", "#e0f3f8", "#abd9e9", "#74add1", "#4575b4")
 
 
 enfcc_index <- enfcc_index |>
